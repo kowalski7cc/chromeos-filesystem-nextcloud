@@ -11,13 +11,20 @@ import WebDAVFS from './webdav_fs';
   const fs = new WebDAVFS(proxy);
 
   async function openWindow() {
-    const window = await browser.windows.create({
+    const current = await browser.windows.getCurrent();
+    const width = 640;
+    const height = 420;
+    const left = Math.round((current.left ?? 0) + ((current.width ?? 0) - width) / 2);
+    const top = Math.round((current.top ?? 0) + ((current.height ?? 0) - height) / 2);
+
+    await browser.windows.create({
       url: 'window.html',
       type: 'popup',
-    });
-    if (!window.id) return;
-    await browser.windows.update(window.id, {
-      width: 500, height: 350,
+      width,
+      height,
+      left,
+      top,
+      focused: true,
     });
   }
 
