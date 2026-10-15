@@ -17,7 +17,7 @@ import WebDAVFS from './webdav_fs';
     });
     if (!window.id) return;
     await browser.windows.update(window.id, {
-      width: 336, height: 300,
+      width: 500, height: 350,
     });
   }
 
