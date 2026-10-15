@@ -1,0 +1,94 @@
+{
+  "appName": {
+    "message": "ChromeOS の Nextcloud 用ストレージサービス",
+    "description": "The name of the application"
+  },
+  "appDescription": {
+    "message": "Chrome OS 向けの非公式 Nextcloud/ownCloud ストレージサービス",
+    "description": "The description of the application"
+  },
+  "shortName": {
+    "message": "Nextcloud",
+    "description": "The short name of the application"
+  },
+  "mountHeader": {
+    "message": "新しい WebDAV サーバーをマウント",
+    "description": "Header describing the server mount form."
+  },
+  "mount": {
+    "message": "マウント",
+    "description": "Label for a button that triggers the mount action."
+  },
+  "keep": {
+    "message": "保持",
+    "description": "Label for a button that triggers the keep action."
+  },
+  "mountAttempt": {
+    "message": "インスタンスのマウントを試行しています...",
+    "description": "Popup notifcation that informs the user that the system is attempting to mount a new instance with the credentials they provided."
+  },
+  "mountSuccess": {
+    "message": "マウントに成功しました。",
+    "description": "Popup notifcation that informs the user that the system successfully mounted a new instance with the credentials they provided."
+  },
+  "mountFail": {
+    "message": "マウントに失敗しました。",
+    "description": "Popup notifcation that informs the user that the system failed to mount a new instance with the credentials they provided."
+  },
+  "url": {
+    "message": "URL",
+    "description": "The server's URL"
+  },
+  "authTypeNone": {
+    "message": "なし",
+    "description": "The authentication type: none"
+  },
+  "authTypeBasic": {
+    "message": "Basic",
+    "description": "The authentication type: Basic"
+  },
+  "authTypeDigest": {
+    "message": "Digest",
+    "description": "The authentication type: Digest"
+  },
+  "username": {
+    "message": "ユーザー名",
+    "description": "The user name"
+  },
+  "password": {
+    "message": "パスワード",
+    "description": "The user password"
+  },
+  "keepPasswordYes": {
+    "message": "はい",
+    "description": "Keep password"
+  },
+  "keepPasswordNo": {
+    "message": "いいえ",
+    "description": "Don't keep password"
+  },
+  "loginTitle": {
+    "message": "Nextcloud にログイン",
+    "description": "Title of the mount dialog"
+  },
+  "nameLabel": {
+    "message": "名前",
+    "description": "Label for the mount name field"
+  },
+  "serverDomain": {
+    "message": "サーバードメイン",
+    "description": "Label for the server domain field"
+  },
+  "useUsernamePassword": {
+    "message": "ユーザー名とパスワードを使用（ownCloud）",
+    "description": "Text for the ownCloud/username form toggle"
+  },
+  "login": {
+    "message": "ログイン",
+    "description": "Button label for the login action"
+  },
+  "mounting": {
+    "message": "マウント中...",
+    "description": "Status text while mounting the instance"
+  }
+}

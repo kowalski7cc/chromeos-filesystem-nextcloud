@@ -1,10 +1,10 @@
 {
   "appName": {
-    "message": "Nextcloud (unofficial)",
+    "message": "ChromeOS Storage Service for Nextcloud",
     "description": "The name of the application"
   },
   "appDescription": {
-    "message": "Nextcloud/ownCloud storage service for Chrome OS",
+    "message": "Unofficial Nextcloud/ownCloud Storage Service for Chrome OS",
     "description": "The description of the application"
   },
   "shortName": {
@@ -66,5 +66,29 @@
   "keepPasswordNo": {
     "message": "No",
     "description": "Don't keep password"
+  },
+  "loginTitle": {
+    "message": "Login to Nextcloud",
+    "description": "Title of the mount dialog"
+  },
+  "nameLabel": {
+    "message": "Name",
+    "description": "Label for the mount name field"
+  },
+  "serverDomain": {
+    "message": "Server domain",
+    "description": "Label for the server domain field"
+  },
+  "useUsernamePassword": {
+    "message": "Use username and password (ownCloud)",
+    "description": "Text for the ownCloud/username form toggle"
+  },
+  "login": {
+    "message": "Login",
+    "description": "Button label for the login action"
+  },
+  "mounting": {
+    "message": "Mounting...",
+    "description": "Status text while mounting the instance"
   }
 }

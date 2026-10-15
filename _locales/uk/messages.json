@@ -1,0 +1,94 @@
+{
+  "appName": {
+    "message": "Сервіс сховища ChromeOS для Nextcloud",
+    "description": "The name of the application"
+  },
+  "appDescription": {
+    "message": "Неофіційний сервіс сховища Nextcloud/ownCloud для Chrome OS",
+    "description": "The description of the application"
+  },
+  "shortName": {
+    "message": "Nextcloud",
+    "description": "The short name of the application"
+  },
+  "mountHeader": {
+    "message": "Підключити новий сервер WebDAV",
+    "description": "Header describing the server mount form."
+  },
+  "mount": {
+    "message": "Підключити",
+    "description": "Label for a button that triggers the mount action."
+  },
+  "keep": {
+    "message": "Зберегти",
+    "description": "Label for a button that triggers the keep action."
+  },
+  "mountAttempt": {
+    "message": "Спроба підключення екземпляра...",
+    "description": "Popup notifcation that informs the user that the system is attempting to mount a new instance with the credentials they provided."
+  },
+  "mountSuccess": {
+    "message": "Підключено успішно.",
+    "description": "Popup notifcation that informs the user that the system successfully mounted a new instance with the credentials they provided."
+  },
+  "mountFail": {
+    "message": "Не вдалося підключити.",
+    "description": "Popup notifcation that informs the user that the system failed to mount a new instance with the credentials they provided."
+  },
+  "url": {
+    "message": "URL",
+    "description": "The server's URL"
+  },
+  "authTypeNone": {
+    "message": "Немає",
+    "description": "The authentication type: none"
+  },
+  "authTypeBasic": {
+    "message": "Базова",
+    "description": "The authentication type: Basic"
+  },
+  "authTypeDigest": {
+    "message": "Digest",
+    "description": "The authentication type: Digest"
+  },
+  "username": {
+    "message": "Ім'я користувача",
+    "description": "The user name"
+  },
+  "password": {
+    "message": "Пароль",
+    "description": "The user password"
+  },
+  "keepPasswordYes": {
+    "message": "Так",
+    "description": "Keep password"
+  },
+  "keepPasswordNo": {
+    "message": "Ні",
+    "description": "Don't keep password"
+  },
+  "loginTitle": {
+    "message": "Увійти в Nextcloud",
+    "description": "Title of the mount dialog"
+  },
+  "nameLabel": {
+    "message": "Назва",
+    "description": "Label for the mount name field"
+  },
+  "serverDomain": {
+    "message": "Домен сервера",
+    "description": "Label for the server domain field"
+  },
+  "useUsernamePassword": {
+    "message": "Використовувати ім'я користувача та пароль (ownCloud)",
+    "description": "Text for the ownCloud/username form toggle"
+  },
+  "login": {
+    "message": "Увійти",
+    "description": "Button label for the login action"
+  },
+  "mounting": {
+    "message": "Підключення...",
+    "description": "Status text while mounting the instance"
+  }
+}

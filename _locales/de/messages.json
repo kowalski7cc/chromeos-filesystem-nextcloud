@@ -1,0 +1,94 @@
+{
+  "appName": {
+    "message": "ChromeOS-Speicherdienst für Nextcloud",
+    "description": "The name of the application"
+  },
+  "appDescription": {
+    "message": "Unoffizieller Nextcloud/ownCloud-Speicherdienst für Chrome OS",
+    "description": "The description of the application"
+  },
+  "shortName": {
+    "message": "Nextcloud",
+    "description": "The short name of the application"
+  },
+  "mountHeader": {
+    "message": "Neuen WebDAV-Server einhängen",
+    "description": "Header describing the server mount form."
+  },
+  "mount": {
+    "message": "Hängen",
+    "description": "Label for a button that triggers the mount action."
+  },
+  "keep": {
+    "message": "Behalten",
+    "description": "Label for a button that triggers the keep action."
+  },
+  "mountAttempt": {
+    "message": "Versucht, Instanz einzuhängen...",
+    "description": "Popup notifcation that informs the user that the system is attempting to mount a new instance with the credentials they provided."
+  },
+  "mountSuccess": {
+    "message": "Erfolgreich eingehängt.",
+    "description": "Popup notifcation that informs the user that the system successfully mounted a new instance with the credentials they provided."
+  },
+  "mountFail": {
+    "message": "Einhängen fehlgeschlagen.",
+    "description": "Popup notifcation that informs the user that the system failed to mount a new instance with the credentials they provided."
+  },
+  "url": {
+    "message": "URL",
+    "description": "The server's URL"
+  },
+  "authTypeNone": {
+    "message": "Keine",
+    "description": "The authentication type: none"
+  },
+  "authTypeBasic": {
+    "message": "Basic",
+    "description": "The authentication type: Basic"
+  },
+  "authTypeDigest": {
+    "message": "Digest",
+    "description": "The authentication type: Digest"
+  },
+  "username": {
+    "message": "Benutzername",
+    "description": "The user name"
+  },
+  "password": {
+    "message": "Passwort",
+    "description": "The user password"
+  },
+  "keepPasswordYes": {
+    "message": "Ja",
+    "description": "Keep password"
+  },
+  "keepPasswordNo": {
+    "message": "Nein",
+    "description": "Don't keep password"
+  },
+  "loginTitle": {
+    "message": "Bei Nextcloud anmelden",
+    "description": "Title of the mount dialog"
+  },
+  "nameLabel": {
+    "message": "Name",
+    "description": "Label for the mount name field"
+  },
+  "serverDomain": {
+    "message": "Serverdomäne",
+    "description": "Label for the server domain field"
+  },
+  "useUsernamePassword": {
+    "message": "Benutzername und Passwort verwenden (ownCloud)",
+    "description": "Text for the ownCloud/username form toggle"
+  },
+  "login": {
+    "message": "Anmelden",
+    "description": "Button label for the login action"
+  },
+  "mounting": {
+    "message": "Einhängen...",
+    "description": "Status text while mounting the instance"
+  }
+}

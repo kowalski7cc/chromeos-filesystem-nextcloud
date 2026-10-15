@@ -1,0 +1,94 @@
+{
+  "appName": {
+    "message": "ChromeOS Nextcloud 存储服务",
+    "description": "The name of the application"
+  },
+  "appDescription": {
+    "message": "适用于 Chrome OS 的非官方 Nextcloud/ownCloud 存储服务",
+    "description": "The description of the application"
+  },
+  "shortName": {
+    "message": "Nextcloud",
+    "description": "The short name of the application"
+  },
+  "mountHeader": {
+    "message": "挂载新的 WebDAV 服务器",
+    "description": "Header describing the server mount form."
+  },
+  "mount": {
+    "message": "挂载",
+    "description": "Label for a button that triggers the mount action."
+  },
+  "keep": {
+    "message": "保留",
+    "description": "Label for a button that triggers the keep action."
+  },
+  "mountAttempt": {
+    "message": "正在尝试挂载实例...",
+    "description": "Popup notifcation that informs the user that the system is attempting to mount a new instance with the credentials they provided."
+  },
+  "mountSuccess": {
+    "message": "挂载成功。",
+    "description": "Popup notifcation that informs the user that the system successfully mounted a new instance with the credentials they provided."
+  },
+  "mountFail": {
+    "message": "挂载失败。",
+    "description": "Popup notifcation that informs the user that the system failed to mount a new instance with the credentials they provided."
+  },
+  "url": {
+    "message": "URL",
+    "description": "The server's URL"
+  },
+  "authTypeNone": {
+    "message": "无",
+    "description": "The authentication type: none"
+  },
+  "authTypeBasic": {
+    "message": "Basic",
+    "description": "The authentication type: Basic"
+  },
+  "authTypeDigest": {
+    "message": "Digest",
+    "description": "The authentication type: Digest"
+  },
+  "username": {
+    "message": "用户名",
+    "description": "The user name"
+  },
+  "password": {
+    "message": "密码",
+    "description": "The user password"
+  },
+  "keepPasswordYes": {
+    "message": "是",
+    "description": "Keep password"
+  },
+  "keepPasswordNo": {
+    "message": "否",
+    "description": "Don't keep password"
+  },
+  "loginTitle": {
+    "message": "登录到 Nextcloud",
+    "description": "Title of the mount dialog"
+  },
+  "nameLabel": {
+    "message": "名称",
+    "description": "Label for the mount name field"
+  },
+  "serverDomain": {
+    "message": "服务器域名",
+    "description": "Label for the server domain field"
+  },
+  "useUsernamePassword": {
+    "message": "使用用户名和密码（ownCloud）",
+    "description": "Text for the ownCloud/username form toggle"
+  },
+  "login": {
+    "message": "登录",
+    "description": "Button label for the login action"
+  },
+  "mounting": {
+    "message": "正在挂载...",
+    "description": "Status text while mounting the instance"
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "appName": {
+    "message": "ChromeOS tárhelyszolgáltatás Nextcloudhoz",
+    "description": "The name of the application"
+  },
+  "appDescription": {
+    "message": "Hivatalos, nem Nextcloud/ownCloud tárhelyszolgáltatás Chrome OS-hez",
+    "description": "The description of the application"
+  },
+  "shortName": {
+    "message": "Nextcloud",
+    "description": "The short name of the application"
+  },
+  "mountHeader": {
+    "message": "Új WebDAV-kiszolgáló csatlakoztatása",
+    "description": "Header describing the server mount form."
+  },
+  "mount": {
+    "message": "Csatlakoztatás",
+    "description": "Label for a button that triggers the mount action."
+  },
+  "keep": {
+    "message": "Megtartás",
+    "description": "Label for a button that triggers the keep action."
+  },
+  "mountAttempt": {
+    "message": "Az instance csatlakoztatása folyamatban...",
+    "description": "Popup notifcation that informs the user that the system is attempting to mount a new instance with the credentials they provided."
+  },
+  "mountSuccess": {
+    "message": "Sikeres csatlakoztatás.",
+    "description": "Popup notifcation that informs the user that the system successfully mounted a new instance with the credentials they provided."
+  },
+  "mountFail": {
+    "message": "A csatlakoztatás sikertelen.",
+    "description": "Popup notifcation that informs the user that the system failed to mount a new instance with the credentials they provided."
+  },
+  "url": {
+    "message": "URL",
+    "description": "The server's URL"
+  },
+  "authTypeNone": {
+    "message": "Nincs",
+    "description": "The authentication type: none"
+  },
+  "authTypeBasic": {
+    "message": "Alap",
+    "description": "The authentication type: Basic"
+  },
+  "authTypeDigest": {
+    "message": "Digest",
+    "description": "The authentication type: Digest"
+  },
+  "username": {
+    "message": "Felhasználónév",
+    "description": "The user name"
+  },
+  "password": {
+    "message": "Jelszó",
+    "description": "The user password"
+  },
+  "keepPasswordYes": {
+    "message": "Igen",
+    "description": "Keep password"
+  },
+  "keepPasswordNo": {
+    "message": "Nem",
+    "description": "Don't keep password"
+  },
+  "loginTitle": {
+    "message": "Bejelentkezés a Nextcloudba",
+    "description": "Title of the mount dialog"
+  },
+  "nameLabel": {
+    "message": "Név",
+    "description": "Label for the mount name field"
+  },
+  "serverDomain": {
+    "message": "Kiszolgáló domaine",
+    "description": "Label for the server domain field"
+  },
+  "useUsernamePassword": {
+    "message": "Felhasználónév és jelszó használata (ownCloud)",
+    "description": "Text for the ownCloud/username form toggle"
+  },
+  "login": {
+    "message": "Bejelentkezés",
+    "description": "Button label for the login action"
+  },
+  "mounting": {
+    "message": "Csatlakoztatás...",
+    "description": "Status text while mounting the instance"
+  }
+}

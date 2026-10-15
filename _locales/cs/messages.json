@@ -66,5 +66,29 @@
   "keepPasswordNo": {
     "message": "Ne",
     "description": "Don't keep password"
+  },
+  "loginTitle": {
+    "message": "Přihlásit se k Nextcloud",
+    "description": "Title of the mount dialog"
+  },
+  "nameLabel": {
+    "message": "Název",
+    "description": "Label for the mount name field"
+  },
+  "serverDomain": {
+    "message": "Doména serveru",
+    "description": "Label for the server domain field"
+  },
+  "useUsernamePassword": {
+    "message": "Použít uživatelské jméno a heslo (ownCloud)",
+    "description": "Text for the ownCloud/username form toggle"
+  },
+  "login": {
+    "message": "Přihlásit se",
+    "description": "Button label for the login action"
+  },
+  "mounting": {
+    "message": "Připojuji...",
+    "description": "Status text while mounting the instance"
   }
 }

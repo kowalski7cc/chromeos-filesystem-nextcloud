@@ -1,5 +1,30 @@
 'use strict';
 
+function i18n(key, substitutions) {
+  return chrome.i18n.getMessage(key, substitutions);
+}
+
+function applyLocale() {
+  const nameLabel = document.querySelector('label[for="name"]');
+  const domainLabel = document.querySelector('label[for="domain"]');
+  const usernameLabel = document.querySelector('label[for="username"]');
+  const passwordLabel = document.querySelector('label[for="password"]');
+  const summary = document.querySelector('#expander summary');
+  const title = document.querySelector('h1');
+  const button = document.querySelector('#btnOk');
+  const message = document.querySelector('#message');
+
+  document.title = i18n('appName');
+  title.textContent = i18n('loginTitle');
+  if (nameLabel) nameLabel.textContent = i18n('nameLabel');
+  if (domainLabel) domainLabel.textContent = i18n('serverDomain');
+  if (summary) summary.textContent = i18n('useUsernamePassword');
+  if (usernameLabel) usernameLabel.textContent = i18n('username');
+  if (passwordLabel) passwordLabel.textContent = i18n('password');
+  if (button) button.textContent = i18n('login');
+  if (message) message.textContent = '';
+}
+
 // modify User-Agent
 async function registerProxy(host) {
   await browser.runtime.sendMessage(['registerProxy', { host }]);
@@ -31,6 +56,8 @@ async function ncLoginFlow(domain) {
   });
 }
 
+applyLocale();
+
 document.querySelector('#btnOk').addEventListener('click', async ev => {
   const btnOk = ev.target;
   btnOk.setAttribute('disabled', 'true');
@@ -53,7 +80,7 @@ document.querySelector('#btnOk').addEventListener('click', async ev => {
   }
 
   const message = document.querySelector('#message');
-  message.innerText = 'Mounting...';
+  message.innerText = i18n('mounting');
 
   await browser.runtime.sendMessage(['mount', request])
     .then(window.close)
@@ -68,6 +95,5 @@ document.querySelector('#expander').addEventListener('toggle', ev => {
   const details = ev.target;
   const button = document.querySelector('#btnOk');
 
-  if (details.open) button.innerText = 'Mount';
-  else button.innerText = 'Login';
+  button.textContent = details.open ? i18n('mount') : i18n('login');
 });
