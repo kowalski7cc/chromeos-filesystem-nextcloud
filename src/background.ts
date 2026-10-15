@@ -46,8 +46,8 @@ import WebDAVFS from './webdav_fs';
         chrome.fileSystemProvider.getAll(resolve);
       });
     for (const { fileSystemId } of infos) {
-      await new Promise(resolve => {
-        chrome.fileSystemProvider.unmount({ fileSystemId }, resolve);
+      await new Promise<void>(resolve => {
+        chrome.fileSystemProvider.unmount({ fileSystemId }, () => resolve());
       });
     }
 

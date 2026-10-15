@@ -1,0 +1,217 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const test = require('node:test');
+const typescript = require('typescript');
+require('fake-indexeddb/auto');
+
+const manifest = require('../manifest.json');
+
+function createProxy(dynamicRules = [], rejectOptionalHeaders = false, hostAccessGranted = true) {
+  const api = {
+    rules: dynamicRules,
+    updates: [],
+    async getDynamicRules() {
+      return this.rules;
+    },
+    async updateDynamicRules({ removeRuleIds, addRules }) {
+      this.updates.push({ removeRuleIds, addRules });
+      if (rejectOptionalHeaders && addRules.some(rule =>
+        rule.action.requestHeaders?.some(header => header.header === 'origin')
+      )) throw new Error('Unsupported header modification');
+      this.rules = this.rules
+        .filter(rule => !removeRuleIds.includes(rule.id))
+        .concat(addRules);
+    },
+  };
+  const browser = {
+    runtime: { id: 'extension-test-id' },
+    permissions: { async contains() { return hostAccessGranted; } },
+  };
+  const chrome = { declarativeNetRequest: api };
+  const proxySource = fs.readFileSync(path.join(__dirname, '../src/proxy.ts'), 'utf8');
+  const compiled = typescript.transpileModule(proxySource, {
+    compilerOptions: {
+      module: typescript.ModuleKind.CommonJS,
+      target: typescript.ScriptTarget.ES2020,
+    },
+  }).outputText;
+  const proxyModule = { exports: {} };
+  new Function('exports', 'require', 'module', 'browser', 'chrome', 'URL', compiled)(
+    proxyModule.exports,
+    require,
+    proxyModule,
+    browser,
+    chrome,
+    URL
+  );
+  return { proxy: new proxyModule.exports.default(), api };
+}
+
+test('manifest declares a Chrome 154 MV3 service worker and public permissions', () => {
+  assert.equal(manifest.manifest_version, 3);
+  assert.equal(manifest.minimum_chrome_version, '154');
+  assert.equal(manifest.background.service_worker, 'dist/background.js');
+  assert.ok(manifest.permissions.includes('declarativeNetRequestWithHostAccess'));
+  assert.ok(!manifest.permissions.includes('webRequestBlocking'));
+  assert.ok(manifest.optional_host_permissions.includes('https://*/'));
+  assert.equal(manifest.file_system_provider_capabilities.source, 'network');
+});
+
+test('WebDAV browser bundle does not depend on a document global', () => {
+  const webdavBundle = fs.readFileSync(require.resolve('webdav/web'), 'utf8');
+  assert.ok(!/\bdocument\s*\.\s*createElement/.test(webdavBundle));
+});
+
+test('proxy registration creates extension-origin-scoped WebDAV header rules', async () => {
+  const { proxy, api } = createProxy();
+  await proxy.register('cloud.example.com');
+
+  assert.equal(api.rules.length, 2);
+  const [requestRule, responseRule] = api.rules;
+  assert.equal(requestRule.condition.urlFilter, '|https://cloud.example.com/');
+  assert.deepEqual(requestRule.condition.initiatorDomains, ['extension-test-id']);
+  assert.deepEqual(requestRule.condition.resourceTypes, ['xmlhttprequest']);
+  assert.ok(requestRule.action.requestHeaders.some(header =>
+    header.header === 'user-agent' && header.operation === 'set'
+  ));
+  for (const headerName of ['cookie', 'origin', 'sec-fetch-site', 'sec-fetch-mode', 'sec-fetch-dest'])
+    assert.ok(requestRule.action.requestHeaders.some(header =>
+      header.header === headerName && header.operation === 'remove'
+    ));
+  assert.deepEqual(responseRule.action.responseHeaders, [
+    { header: 'set-cookie', operation: 'remove' },
+  ]);
+});
+
+test('proxy reconciliation removes only its own rules', async () => {
+  const { proxy, api } = createProxy([
+    { id: 100000, condition: { urlFilter: '|https://old.example.com/' } },
+    { id: 100001, condition: { urlFilter: '|https://old.example.com/' } },
+    { id: 7, condition: { urlFilter: '|https://other.example.com/' } },
+  ]);
+  await proxy.reconcile(['new.example.com']);
+
+  assert.deepEqual(api.updates[0].removeRuleIds, [100000, 100001]);
+  assert.ok(api.rules.some(rule => rule.id === 7));
+  assert.equal(api.rules.filter(rule => rule.id >= 100000 && rule.id < 105000).length, 2);
+});
+
+test('proxy rejects non-origin server input', async () => {
+  const { proxy, api } = createProxy();
+  await assert.rejects(proxy.reconcile(['cloud.example.com/path']), /valid HTTPS server domain/);
+  assert.equal(api.updates.length, 0);
+});
+
+test('proxy skips hosts whose optional permission has been revoked', async () => {
+  const { proxy, api } = createProxy([], false, false);
+  await proxy.reconcile(['cloud.example.com']);
+
+  assert.equal(api.updates.length, 1);
+  assert.deepEqual(api.updates[0].addRules, []);
+});
+
+test('proxy retries without optional Origin and Sec-Fetch edits', async () => {
+  const { proxy, api } = createProxy([], true);
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  try {
+    await proxy.reconcile(['cloud.example.com']);
+  } finally {
+    console.warn = originalWarn;
+  }
+
+  assert.equal(api.updates.length, 2);
+  const requestRule = api.updates[1].addRules.find(rule => rule.action.requestHeaders);
+  assert.ok(requestRule.action.requestHeaders.some(header => header.header === 'cookie'));
+  assert.ok(requestRule.action.requestHeaders.some(header => header.header === 'user-agent'));
+  assert.ok(!requestRule.action.requestHeaders.some(header => header.header === 'origin'));
+  assert.ok(!requestRule.action.requestHeaders.some(header => header.header.startsWith('sec-fetch-')));
+});
+
+test('open-file records persist when the service-worker module is reloaded', async () => {
+  const storeSource = fs.readFileSync(path.join(__dirname, '../src/opened_files_store.ts'), 'utf8');
+  const compiled = typescript.transpileModule(storeSource, {
+    compilerOptions: {
+      module: typescript.ModuleKind.CommonJS,
+      target: typescript.ScriptTarget.ES2020,
+    },
+  }).outputText;
+  const loadStore = () => {
+    const storeModule = { exports: {} };
+    new Function('exports', 'require', 'module', compiled)(
+      storeModule.exports,
+      require,
+      storeModule
+    );
+    return storeModule.exports;
+  };
+  const firstWorker = loadStore();
+  const record = {
+    key: 'webdavfs://cloud.example.com/user:17',
+    openRequestId: 17,
+    fileSystemId: 'webdavfs://cloud.example.com/user',
+    filePath: '/document.txt',
+    mode: 'WRITE',
+    uuid: 'upload-id',
+    buffer: Uint8Array.from([1, 2, 3]).buffer,
+    recoverable: true,
+  };
+  await firstWorker.putOpenedFile(record);
+
+  const restartedWorker = loadStore();
+  assert.deepEqual(
+    await restartedWorker.getOpenedFile(record.fileSystemId, record.openRequestId),
+    record
+  );
+  await restartedWorker.removeOpenedFile(record.fileSystemId, record.openRequestId);
+  assert.equal(
+    await restartedWorker.getOpenedFile(record.fileSystemId, record.openRequestId),
+    undefined
+  );
+});
+
+test('concurrent persisted writes retain bytes at all offsets', async () => {
+  const storeSource = fs.readFileSync(path.join(__dirname, '../src/opened_files_store.ts'), 'utf8');
+  const compiled = typescript.transpileModule(storeSource, {
+    compilerOptions: {
+      module: typescript.ModuleKind.CommonJS,
+      target: typescript.ScriptTarget.ES2020,
+    },
+  }).outputText;
+  const storeModule = { exports: {} };
+  new Function('exports', 'require', 'module', compiled)(
+    storeModule.exports,
+    require,
+    storeModule
+  );
+  const store = storeModule.exports;
+  const fileSystemId = 'webdavfs://atomic.example.com/user';
+  const openRequestId = 23;
+  await store.putOpenedFile({
+    key: `${fileSystemId}:${openRequestId}`,
+    openRequestId,
+    fileSystemId,
+    filePath: '/parallel.bin',
+    mode: 'WRITE',
+    uuid: 'upload-id',
+    buffer: new ArrayBuffer(0),
+    recoverable: true,
+  });
+
+  const writeAt = (offset, value) => store.updateOpenedFile(
+    fileSystemId,
+    openRequestId,
+    current => {
+      const length = Math.max(current.buffer.byteLength, offset + 1);
+      const buffer = new Uint8Array(length);
+      buffer.set(new Uint8Array(current.buffer));
+      buffer[offset] = value;
+      return { ...current, buffer: buffer.buffer };
+    }
+  );
+  await Promise.all([writeAt(1, 2), writeAt(0, 1)]);
+
+  const result = await store.getOpenedFile(fileSystemId, openRequestId);
+  assert.deepEqual(Array.from(new Uint8Array(result.buffer)), [1, 2]);
+});

@@ -2,6 +2,15 @@ import { createClient, Client } from 'webdav/web';
 import { v1 as uuidv1 } from 'uuid';
 
 import MetadataCache from './metadata_cache';
+import {
+  getOpenedFile,
+  getOpenedFiles,
+  openedFileKey,
+  OpenedFileRecord,
+  putOpenedFile,
+  removeOpenedFile,
+  updateOpenedFile,
+} from './opened_files_store';
 import Proxy from './proxy';
 
 type ServerType = 'nc' | 'oc'; // Nextcloud/ownCloud
@@ -23,25 +32,19 @@ interface FileSystemProps {
   uploadPathConverter: PathConverter
 }
 
-interface OpenedFileProps {
-  filePath: string
-  mode: string
-  uuid: string
-  buffer: ArrayBuffer
-}
-
 export default class WebDAVFS {
   #proxy: Proxy;
   #fileSystemMap: { [fileSystemId: string]: FileSystemProps } = {};
-  #openedFilesMap: { [openRequestId: string]: OpenedFileProps } = {};
+  #ready: Promise<void> = Promise.resolve();
 
   constructor(proxy: Proxy) {
     this.#proxy = proxy;
+    this.#ready = this.#resume();
     this.#assignEventHandlers();
-    this.#resume();
   }
 
   async isMounted(domain: string, username: string) {
+    await this.#ready;
     const fileSystemId = createFileSystemID(domain, username);
     const fileSystems: chrome.fileSystemProvider.FileSystemInfo[] =
       await new Promise(resolve => {
@@ -51,12 +54,13 @@ export default class WebDAVFS {
   }
 
   async mount(credential: Credential) {
+    await this.#ready;
     console.log('WebDAVFS.mount')
 
     const { name, domain, username } = credential;
     if (await this.isMounted(domain, username)) return;
 
-    this.#proxy.register(domain);
+    await this.#proxy.register(domain);
 
     const props = this.#getFileSystemProps(credential);
     const { client, filePathConverter } = props;
@@ -64,8 +68,8 @@ export default class WebDAVFS {
     await client.getDirectoryContents(filePathConverter('/'));
 
     const fileSystemId = createFileSystemID(domain, username);
-    await new Promise(resolve => chrome.fileSystemProvider.mount(
-      { fileSystemId, displayName: name, writable: true }, resolve
+    await new Promise<void>(resolve => chrome.fileSystemProvider.mount(
+      { fileSystemId, displayName: name, writable: true }, () => resolve()
     ));
 
     this.#fileSystemMap[fileSystemId] = props;
@@ -74,10 +78,11 @@ export default class WebDAVFS {
   }
 
   async resumeMounts() {
+    await this.#ready;
     for (const { name, domain, username } of await getMountedCredentials()) {
       const fileSystemId = createFileSystemID(domain, username);
-      await new Promise(resolve => chrome.fileSystemProvider.mount(
-        { fileSystemId, displayName: name, writable: true }, resolve
+      await new Promise<void>(resolve => chrome.fileSystemProvider.mount(
+        { fileSystemId, displayName: name, writable: true }, () => resolve()
       ));
     }
     this.#resume();
@@ -87,12 +92,15 @@ export default class WebDAVFS {
     const { fileSystemId } = options;
     console.log(`WebDAVFS.onUnmountRequested: fileSystemId=${fileSystemId}`);
 
-    await new Promise(resolve => 
-      chrome.fileSystemProvider.unmount({ fileSystemId }, resolve));
+    await new Promise<void>(resolve =>
+      chrome.fileSystemProvider.unmount({ fileSystemId }, () => resolve()));
 
     delete this.#fileSystemMap[fileSystemId];
 
     await removeMountedCredential(fileSystemId);
+    await this.#proxy.reconcile(
+      (await getMountedCredentials()).map(credential => credential.domain)
+    );
   }
 
   async onReadDirectoryRequested(
@@ -150,20 +158,32 @@ export default class WebDAVFS {
       await client.createDirectory(uploadPathConverter(`/${uuid}`));
     }
 
-    this.#openedFilesMap[requestId] = { filePath, mode, uuid, buffer };
+    await putOpenedFile({
+      key: openedFileKey(fileSystemId, requestId),
+      openRequestId: requestId,
+      fileSystemId,
+      filePath,
+      mode,
+      uuid,
+      buffer,
+      recoverable: true,
+    });
   }
 
   async onCloseFileRequested(
     options: chrome.fileSystemProvider.OpenedFileRequestedEventOptions
   ) {
     const { fileSystemId, openRequestId } = options;
-    const { filePath, mode, uuid, buffer } = this.#openedFilesMap[openRequestId];
+    const openedFile = await getOpenedFile(fileSystemId, openRequestId);
+    if (!openedFile) throw new Error('Open file operation state is unavailable');
+    const { filePath, mode, uuid, buffer, recoverable } = openedFile;
     console.log(`WebDAVFS.onCloseFileRequested: openRequestId=${openRequestId}, filePath='${filePath}', mode=${mode}`);
 
     const { server, client, filePathConverter, uploadPathConverter } =
       this.#fileSystemMap[fileSystemId];
 
     if (mode === 'WRITE') {
+      if (!recoverable) throw new Error('Open file operation cannot be safely resumed');
       if (server === 'nc') {
         // Nextcloud chunked file upload
         // https://docs.nextcloud.com/server/15/developer_manual/client_apis/WebDAV/chunking.html
@@ -173,14 +193,16 @@ export default class WebDAVFS {
       } else await client.putFileContents(filePathConverter(filePath), buffer);
     }
 
-    delete this.#openedFilesMap[openRequestId];
+    await removeOpenedFile(fileSystemId, openRequestId);
   }
 
   async onReadFileRequested(
     options: chrome.fileSystemProvider.OpenedFileOffsetRequestedEventOptions
   ) {
     const { fileSystemId, openRequestId, offset, length } = options;
-    const { filePath } = this.#openedFilesMap[openRequestId];
+    const openedFile = await getOpenedFile(fileSystemId, openRequestId);
+    if (!openedFile) throw new Error('Open file operation state is unavailable');
+    const { filePath } = openedFile;
     console.log(`WebDAVFS.onReadFileRequested: openRequestId=${openRequestId}, filePath='${filePath}', offset=${offset}, length=${length}`);
     console.debug(options);
 
@@ -207,7 +229,11 @@ export default class WebDAVFS {
     options: chrome.fileSystemProvider.OpenedFileIoRequestedEventOptions
   ) {
     const { fileSystemId, openRequestId, offset, data } = options;
-    const { filePath, uuid, buffer } = this.#openedFilesMap[openRequestId];
+    const openedFile = await getOpenedFile(fileSystemId, openRequestId);
+    if (!openedFile) throw new Error('Open file operation state is unavailable');
+    if (!openedFile.recoverable)
+      throw new Error('Open file operation cannot be safely resumed');
+    const { filePath, uuid } = openedFile;
     console.log(`WebDAVFS.onWriteFileRequested: openRequestId=${openRequestId}, filePath='${filePath}', offset=${offset}, data.byteLength=${data.byteLength}`);
 
     const { server, client, uploadPathConverter } =
@@ -222,10 +248,13 @@ export default class WebDAVFS {
       console.log(`WebDAVFS.onWriteFileRequested: uploadPath: ${uploadPath}`);
       await client.putFileContents(uploadPathConverter(uploadPath), data);
     } else {
-      const typed = new Uint8Array(new ArrayBuffer(offset + data.byteLength));
-      typed.set(new Uint8Array(buffer));
-      typed.set(new Uint8Array(data), offset);
-      this.#openedFilesMap[openRequestId].buffer = typed.buffer;
+      await updateOpenedFile(fileSystemId, openRequestId, current => {
+        const length = Math.max(current.buffer.byteLength, offset + data.byteLength);
+        const typed = new Uint8Array(new ArrayBuffer(length));
+        typed.set(new Uint8Array(current.buffer));
+        typed.set(new Uint8Array(data), offset);
+        return { ...current, buffer: typed.buffer };
+      });
     }
   }
 
@@ -314,7 +343,7 @@ export default class WebDAVFS {
 
       (chrome.fileSystemProvider as any)[name].addListener(
         (options: any, successCallback: Function, errorCallback: Function) => {
-          (this as any)[name](options).then((result: void | Array<any>) => {
+            this.#ready.then(() => (this as any)[name](options)).then((result: void | Array<any>) => {
             successCallback(...(result || []));
           }).catch((error: string | Error) => {
             if (error instanceof Error) console.error(error);
@@ -331,11 +360,51 @@ export default class WebDAVFS {
   #resume = async () => {
     console.log('WebDAVFS.resume');
 
-    for (const credential of await getMountedCredentials()) {
+    const credentials = await getMountedCredentials();
+    const fileSystems: chrome.fileSystemProvider.FileSystemInfo[] =
+      await new Promise(resolve => chrome.fileSystemProvider.getAll(resolve));
+    const mountedIds = new Set(fileSystems.map(fileSystem => fileSystem.fileSystemId));
+    const mountedCredentials = credentials.filter(credential => {
+      const fileSystemId = createFileSystemID(credential.domain, credential.username);
+      return mountedIds.has(fileSystemId);
+    });
+
+    for (const credential of mountedCredentials) {
       const { domain, username } = credential;
       const fileSystemId = createFileSystemID(domain, username);
       this.#fileSystemMap[fileSystemId] = this.#getFileSystemProps(credential);
-      this.#proxy.register(domain);
+    }
+
+    await this.#proxy.reconcile(mountedCredentials.map(credential => credential.domain));
+
+    const storedFiles = new Map(
+      (await getOpenedFiles()).map(openedFile => [openedFile.key, openedFile])
+    );
+    const activeKeys = new Set<string>();
+    for (const fileSystem of fileSystems) {
+      for (const openedFile of fileSystem.openedFiles || []) {
+        const key = openedFileKey(fileSystem.fileSystemId, openedFile.openRequestId);
+        activeKeys.add(key);
+        const stored = storedFiles.get(key);
+        if (stored && stored.filePath === openedFile.filePath && stored.mode === openedFile.mode)
+          continue;
+
+        const recovered: OpenedFileRecord = {
+          key,
+          openRequestId: openedFile.openRequestId,
+          fileSystemId: fileSystem.fileSystemId,
+          filePath: openedFile.filePath,
+          mode: openedFile.mode,
+          uuid: uuidv1(),
+          buffer: new ArrayBuffer(0),
+          recoverable: openedFile.mode !== 'WRITE',
+        };
+        await putOpenedFile(recovered);
+      }
+    }
+    for (const record of storedFiles.values()) {
+      if (mountedIds.has(record.fileSystemId) && !activeKeys.has(record.key))
+        await removeOpenedFile(record.fileSystemId, record.openRequestId);
     }
   };
 
