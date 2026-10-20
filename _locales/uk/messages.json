@@ -87,6 +87,30 @@
     "message": "Увійти",
     "description": "Button label for the login action"
   },
+  "openOnWeb": {
+    "message": "Відкрити у вебі",
+    "description": "Action to open a file or folder on the server website"
+  },
+  "shareLinkTitle": {
+    "message": "Публічне посилання",
+    "description": "Title of the public share link page"
+  },
+  "shareLinkDescription": {
+    "message": "Будь-хто, хто має це посилання, може отримати доступ до спільного елемента.",
+    "description": "Explanation of public link access"
+  },
+  "copyLink": {
+    "message": "Копіювати посилання",
+    "description": "Button to copy a public share link"
+  },
+  "linkCopied": {
+    "message": "Посилання скопійовано",
+    "description": "Confirmation that the link was copied"
+  },
+  "copyLinkFailed": {
+    "message": "Не вдалося скопіювати посилання.",
+    "description": "Error shown when the link cannot be copied"
+  },
   "mounting": {
     "message": "Підключення...",
     "description": "Status text while mounting the instance"

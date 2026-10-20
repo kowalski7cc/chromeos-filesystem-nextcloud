@@ -87,6 +87,30 @@
     "message": "Přihlásit se",
     "description": "Button label for the login action"
   },
+  "openOnWeb": {
+    "message": "Otevřít na webu",
+    "description": "Action to open a file or folder on the server website"
+  },
+  "shareLinkTitle": {
+    "message": "Veřejný odkaz",
+    "description": "Title of the public share link page"
+  },
+  "shareLinkDescription": {
+    "message": "K této položce má přístup kdokoli s tímto odkazem.",
+    "description": "Explanation of public link access"
+  },
+  "copyLink": {
+    "message": "Kopírovat odkaz",
+    "description": "Button to copy a public share link"
+  },
+  "linkCopied": {
+    "message": "Odkaz zkopírován",
+    "description": "Confirmation that the link was copied"
+  },
+  "copyLinkFailed": {
+    "message": "Odkaz se nepodařilo zkopírovat.",
+    "description": "Error shown when the link cannot be copied"
+  },
   "mounting": {
     "message": "Připojuji...",
     "description": "Status text while mounting the instance"

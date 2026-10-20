@@ -87,6 +87,30 @@
     "message": "登录",
     "description": "Button label for the login action"
   },
+  "openOnWeb": {
+    "message": "在网页中打开",
+    "description": "Action to open a file or folder on the server website"
+  },
+  "shareLinkTitle": {
+    "message": "公开链接",
+    "description": "Title of the public share link page"
+  },
+  "shareLinkDescription": {
+    "message": "任何拥有此链接的人都可以访问共享项目。",
+    "description": "Explanation of public link access"
+  },
+  "copyLink": {
+    "message": "复制链接",
+    "description": "Button to copy a public share link"
+  },
+  "linkCopied": {
+    "message": "已复制链接",
+    "description": "Confirmation that the link was copied"
+  },
+  "copyLinkFailed": {
+    "message": "无法复制链接。",
+    "description": "Error shown when the link cannot be copied"
+  },
   "mounting": {
     "message": "正在挂载...",
     "description": "Status text while mounting the instance"

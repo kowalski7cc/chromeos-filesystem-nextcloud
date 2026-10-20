@@ -87,6 +87,30 @@
     "message": "ログイン",
     "description": "Button label for the login action"
   },
+  "openOnWeb": {
+    "message": "ウェブで開く",
+    "description": "Action to open a file or folder on the server website"
+  },
+  "shareLinkTitle": {
+    "message": "公開リンク",
+    "description": "Title of the public share link page"
+  },
+  "shareLinkDescription": {
+    "message": "このリンクを持つ人は誰でも共有項目にアクセスできます。",
+    "description": "Explanation of public link access"
+  },
+  "copyLink": {
+    "message": "リンクをコピー",
+    "description": "Button to copy a public share link"
+  },
+  "linkCopied": {
+    "message": "リンクをコピーしました",
+    "description": "Confirmation that the link was copied"
+  },
+  "copyLinkFailed": {
+    "message": "リンクをコピーできませんでした。",
+    "description": "Error shown when the link cannot be copied"
+  },
   "mounting": {
     "message": "マウント中...",
     "description": "Status text while mounting the instance"

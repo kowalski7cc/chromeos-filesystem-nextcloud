@@ -87,6 +87,30 @@
     "message": "Anmelden",
     "description": "Button label for the login action"
   },
+  "openOnWeb": {
+    "message": "Im Web öffnen",
+    "description": "Action to open a file or folder on the server website"
+  },
+  "shareLinkTitle": {
+    "message": "Öffentlicher Link",
+    "description": "Title of the public share link page"
+  },
+  "shareLinkDescription": {
+    "message": "Jeder mit diesem Link kann auf das freigegebene Element zugreifen.",
+    "description": "Explanation of public link access"
+  },
+  "copyLink": {
+    "message": "Link kopieren",
+    "description": "Button to copy a public share link"
+  },
+  "linkCopied": {
+    "message": "Link kopiert",
+    "description": "Confirmation that the link was copied"
+  },
+  "copyLinkFailed": {
+    "message": "Der Link konnte nicht kopiert werden.",
+    "description": "Error shown when the link cannot be copied"
+  },
   "mounting": {
     "message": "Einhängen...",
     "description": "Status text while mounting the instance"

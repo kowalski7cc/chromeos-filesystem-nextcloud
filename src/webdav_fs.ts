@@ -3,6 +3,15 @@ import { v1 as uuidv1 } from 'uuid';
 
 import MetadataCache from './metadata_cache';
 import {
+  clearOfflineEntries,
+  getOfflineEntries,
+  getOfflineEntry,
+  invalidateOfflineEntries,
+  OfflineEntryInput,
+  removeOfflineEntries,
+  replaceOfflineEntries,
+} from './offline_store';
+import {
   getOpenedFile,
   getOpenedFiles,
   openedFileKey,
@@ -26,11 +35,34 @@ interface Credential {
 
 interface FileSystemProps {
   server: ServerType
+  domain: string
+  username: string
   client: Client
   metadataCache: MetadataCache
   filePathConverter: PathConverter
   uploadPathConverter: PathConverter
 }
+
+interface GetActionsOptions {
+  fileSystemId: string
+  entryPaths?: string[]
+  entryPath?: string
+}
+
+interface ExecuteActionOptions extends GetActionsOptions {
+  actionId: string
+}
+
+interface ProviderAction {
+  id: string
+  title?: string
+}
+
+const OPEN_ON_WEB = 'OPEN_ON_WEB';
+const FILE_ID_PROPFIND = `<?xml version="1.0" encoding="UTF-8"?>
+<d:propfind xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
+  <d:prop><oc:id/></d:prop>
+</d:propfind>`;
 
 export default class WebDAVFS {
   #proxy: Proxy;
@@ -97,6 +129,7 @@ export default class WebDAVFS {
 
     delete this.#fileSystemMap[fileSystemId];
 
+    await clearOfflineEntries(fileSystemId);
     await removeMountedCredential(fileSystemId);
     await this.#proxy.reconcile(
       (await getMountedCredentials()).map(credential => credential.domain)
@@ -112,8 +145,28 @@ export default class WebDAVFS {
 
     const { client, metadataCache, filePathConverter } =
       this.#fileSystemMap[fileSystemId];
-    const stats =
-      await client.getDirectoryContents(filePathConverter(directoryPath)) as any[];
+    let stats: any[];
+    try {
+      stats = await client.getDirectoryContents(filePathConverter(directoryPath)) as any[];
+    } catch (error) {
+      if (isClientHttpError(error)) throw error;
+      const entries = await getOfflineEntries(fileSystemId);
+      const directory = await getOfflineEntry(fileSystemId, directoryPath);
+      if (directory && !directory.metadata.isDirectory) throw error;
+      if (!directory && !entries.some(entry =>
+        isStrictDescendant(entry.filePath, directoryPath)
+      )) throw error;
+      const childEntries = new Map<string, (typeof entries)[number]>();
+      for (const entry of entries) {
+        if (parentEntryPath(entry.filePath) !== directoryPath) continue;
+        const current = childEntries.get(entry.filePath);
+        if (!current || entry.cachedAt > current.cachedAt)
+          childEntries.set(entry.filePath, entry);
+      }
+      const metadataList = Array.from(childEntries.values(), entry =>
+        entry.metadata as chrome.fileSystemProvider.EntryMetadata);
+      return [metadataList.map(metadata => canonicalizedMetadata(metadata, options)), false];
+    }
     const metadataList = stats.map(fromStat);
     metadataCache.put(directoryPath, metadataList);
     const hasMore = false;
@@ -136,9 +189,26 @@ export default class WebDAVFS {
     if (cache.metadata && cache.directoryExists && cache.fileExists)
       return [canonicalizedMetadata(cache.metadata, options)];
 
-    const stat = await client.stat(filePathConverter(entryPath));
-    console.debug(stat);
-    return [canonicalizedMetadata(fromStat(stat), options)];
+    try {
+      const stat = await client.stat(filePathConverter(entryPath));
+      console.debug(stat);
+      return [canonicalizedMetadata(fromStat(stat), options)];
+    } catch (error) {
+      if (isClientHttpError(error)) throw error;
+      const entry = await getOfflineEntry(fileSystemId, entryPath);
+      const entries = entry ? [] : await getOfflineEntries(fileSystemId);
+      if (!entry && !entries.some(candidate =>
+        isStrictDescendant(candidate.filePath, entryPath)
+      )) throw error;
+      const metadata = entry?.metadata || {
+        name: entryPath === '/' ? '' : entryPath.slice(entryPath.lastIndexOf('/') + 1),
+        isDirectory: true,
+        modificationTime: new Date(0),
+      };
+      return [canonicalizedMetadata(
+        metadata as chrome.fileSystemProvider.EntryMetadata, options
+      )];
+    }
   }
 
   async onOpenFileRequested(
@@ -191,6 +261,7 @@ export default class WebDAVFS {
           uploadPathConverter(`/${uuid}/.file`), filePathConverter(filePath)
         );
       } else await client.putFileContents(filePathConverter(filePath), buffer);
+      await invalidateOfflineEntries(fileSystemId, filePath);
     }
 
     await removeOpenedFile(fileSystemId, openRequestId);
@@ -218,7 +289,24 @@ export default class WebDAVFS {
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests
     headers.set('Range', `bytes=${offset}-${offset + length - 1}`);
 
-    const response = await fetch(url_, { headers });
+    let response: Response;
+    try {
+      response = await fetch(url_, { headers });
+    } catch (error) {
+      const entry = await getOfflineEntry(fileSystemId, filePath);
+      if (!entry?.content) throw error;
+      const bytes = new Uint8Array(entry.content).slice(offset, offset + length);
+      return [bytes.buffer, offset + bytes.byteLength < entry.content.byteLength];
+    }
+    if (!response.ok) {
+      if (response.status < 500)
+        throw new Error(`File read failed with status ${response.status}`);
+      const entry = await getOfflineEntry(fileSystemId, filePath);
+      if (!entry?.content)
+        throw new Error(`File read failed with status ${response.status}`);
+      const bytes = new Uint8Array(entry.content).slice(offset, offset + length);
+      return [bytes.buffer, offset + bytes.byteLength < entry.content.byteLength];
+    }
     console.log(`WebDAVFS.onReadFileRequested: Content-Range: ${response.headers.get('Content-Range')}`);
     const buffer = await response.arrayBuffer();
     const hasMore = false;
@@ -268,6 +356,7 @@ export default class WebDAVFS {
     const { client, metadataCache, filePathConverter } = this.#fileSystemMap[fileSystemId];
     await client.createDirectory(filePathConverter(directoryPath));
 
+    await invalidateOfflineEntries(fileSystemId, directoryPath);
     metadataCache.remove(directoryPath);
   }
 
@@ -278,8 +367,9 @@ export default class WebDAVFS {
     console.log(`WebDAVFS.onDeleteEntryRequested: entryPath=${entryPath}`);
 
     const { client, metadataCache, filePathConverter } = this.#fileSystemMap[fileSystemId];
-    client.deleteFile(filePathConverter(entryPath));
+    await client.deleteFile(filePathConverter(entryPath));
 
+    await invalidateOfflineEntries(fileSystemId, entryPath);
     metadataCache.remove(entryPath);
   }
 
@@ -293,6 +383,7 @@ export default class WebDAVFS {
     const data = new ArrayBuffer(0);
     await client.putFileContents(filePathConverter(filePath), data);
 
+    await invalidateOfflineEntries(fileSystemId, filePath);
     metadataCache.remove(filePath);
   }
 
@@ -305,6 +396,7 @@ export default class WebDAVFS {
     const { client, metadataCache, filePathConverter } = this.#fileSystemMap[fileSystemId];
     await client.copyFile(filePathConverter(sourcePath), filePathConverter(targetPath));
 
+    await invalidateOfflineEntries(fileSystemId, targetPath);
     metadataCache.remove(sourcePath);
     metadataCache.remove(targetPath);
   }
@@ -318,6 +410,8 @@ export default class WebDAVFS {
     const { client, metadataCache, filePathConverter } = this.#fileSystemMap[fileSystemId];
     await client.moveFile(filePathConverter(sourcePath), filePathConverter(targetPath));
 
+    await invalidateOfflineEntries(fileSystemId, sourcePath);
+    await invalidateOfflineEntries(fileSystemId, targetPath);
     metadataCache.remove(sourcePath);
     metadataCache.remove(targetPath);
   }
@@ -335,6 +429,131 @@ export default class WebDAVFS {
   ) {
     const { operationRequestId } = options;
     console.log(`WebDAVFS.onAbortRequested: operationRequestId=${operationRequestId}`)
+  }
+
+  async onGetActionsRequested(options: GetActionsOptions) {
+    const { fileSystemId } = options;
+    const entryPaths = requestedEntryPaths(options);
+    if (!entryPaths.length) return [[
+      { id: OPEN_ON_WEB, title: chrome.i18n.getMessage('openOnWeb') || 'Open on web' },
+    ]];
+
+    const props = this.#fileSystemMap[fileSystemId];
+    const actions: ProviderAction[] = [];
+
+    const entries = await Promise.all(entryPaths.map(entryPath =>
+      getOfflineEntry(fileSystemId, entryPath).catch(error => {
+        console.warn('Could not read offline pin state', error);
+        return undefined;
+      })
+    ));
+    const isPinned = entries.map(entry => Boolean(entry && !entry.incomplete));
+    if (isPinned.every(Boolean)) actions.push({ id: 'OFFLINE_NOT_NECESSARY' });
+    else actions.push({ id: 'SAVE_FOR_OFFLINE' });
+    if (props?.server === 'nc' && entryPaths.length === 1)
+      actions.push({ id: 'SHARE' });
+    actions.push({
+      id: OPEN_ON_WEB,
+      title: chrome.i18n.getMessage('openOnWeb') || 'Open on web',
+    });
+    return [actions];
+  }
+
+  async onExecuteActionRequested(options: ExecuteActionOptions) {
+    const { fileSystemId, actionId } = options;
+    const requestedPaths = requestedEntryPaths(options);
+    const entryPaths = actionId === OPEN_ON_WEB && !requestedPaths.length
+      ? ['/']
+      : requestedPaths;
+    if (!entryPaths.length) throw new Error('Action requires a selected entry');
+    if (actionId === 'SAVE_FOR_OFFLINE') {
+      for (const entryPath of entryPaths) {
+        const entry = await getOfflineEntry(fileSystemId, entryPath);
+        if (entry && !entry.incomplete) continue;
+        await this.#pinOfflineEntry(fileSystemId, entryPath);
+      }
+    } else if (actionId === 'OFFLINE_NOT_NECESSARY') {
+      for (const entryPath of entryPaths)
+        await removeOfflineEntries(fileSystemId, entryPath);
+    } else if (actionId === 'SHARE') {
+      if (entryPaths.length !== 1) throw new Error('Share one entry at a time');
+      const shareUrl = await this.#createPublicShare(fileSystemId, entryPaths[0]);
+      const panelUrl = browser.runtime.getURL(
+        `share.html?url=${encodeURIComponent(shareUrl)}`
+      );
+      await browser.tabs.create({ url: panelUrl });
+    } else if (actionId === OPEN_ON_WEB) {
+      for (const entryPath of entryPaths)
+        await this.#openInWeb(fileSystemId, entryPath);
+    } else throw new Error('Unsupported action');
+  }
+
+  async #pinOfflineEntry(fileSystemId: string, entryPath: string) {
+    const { client, filePathConverter } = this.#fileSystemMap[fileSystemId];
+    const entries: OfflineEntryInput[] = [];
+    const visited = new Set<string>();
+
+    const collect = async (path: string, stat?: any): Promise<void> => {
+      if (visited.has(path)) return;
+      visited.add(path);
+      const current = stat || await client.stat(filePathConverter(path));
+      const metadata = fromStat(current) as OfflineEntryInput['metadata'];
+      const entry: OfflineEntryInput = { filePath: path, metadata };
+      entries.push(entry);
+      if (metadata.isDirectory) {
+        const children = await client.getDirectoryContents(filePathConverter(path)) as any[];
+        for (const child of children)
+          await collect(joinEntryPath(path, child.basename), child);
+      } else {
+        entry.content = toArrayBuffer(await client.getFileContents(
+          filePathConverter(path), { format: 'binary' }
+        ));
+      }
+    };
+
+    await collect(entryPath);
+    await replaceOfflineEntries(fileSystemId, entryPath, entries);
+  }
+
+  async #createPublicShare(fileSystemId: string, entryPath: string) {
+    const { domain, client } = this.#fileSystemMap[fileSystemId];
+    const headers = new Headers(client.getHeaders());
+    headers.set('Accept', 'application/json');
+    headers.set('OCS-APIRequest', 'true');
+    headers.set('Content-Type', 'application/x-www-form-urlencoded');
+    const body = new URLSearchParams({ path: entryPath, shareType: '3' });
+    const response = await fetch(
+      `https://${domain}/ocs/v2.php/apps/files_sharing/api/v1/shares`,
+      { method: 'POST', headers, body }
+    );
+    if (!response.ok) throw new Error(`Nextcloud sharing failed with status ${response.status}`);
+    const result = await response.json();
+    const ocs = result?.ocs;
+    const statusCode = Number(ocs?.meta?.statuscode);
+    const shareUrl = ocs?.data?.url;
+    if (![100, 200].includes(statusCode) || typeof shareUrl !== 'string' || !shareUrl)
+      throw new Error(ocs?.meta?.message || 'Nextcloud did not return a public link');
+    return shareUrl;
+  }
+
+  async #openInWeb(fileSystemId: string, entryPath: string) {
+    const { domain, client, filePathConverter } = this.#fileSystemMap[fileSystemId];
+    const result = await client.stat(filePathConverter(entryPath), {
+      details: true,
+      data: FILE_ID_PROPFIND,
+    });
+    const stat = result?.data || result;
+    const url = new URL('/apps/files/', `https://${domain}`);
+    if (stat.type === 'directory') {
+      url.searchParams.set('dir', entryPath);
+    } else {
+      const fileId = getFileId(stat);
+      if (!fileId) throw new Error('Nextcloud did not return a file ID for the selected file');
+      url.pathname = `${url.pathname}files/${encodeURIComponent(fileId)}`;
+      url.searchParams.set('dir', parentEntryPath(entryPath));
+      url.searchParams.set('openfile', 'true');
+    }
+    await browser.tabs.create({ url: url.toString() });
   }
 
   #assignEventHandlers = () => {
@@ -420,7 +639,7 @@ export default class WebDAVFS {
       path => `/uploads/${username}${path}`;
 
     return {
-      server, client, metadataCache, filePathConverter, uploadPathConverter,
+      server, domain, username, client, metadataCache, filePathConverter, uploadPathConverter,
     };
   };
 }
@@ -448,6 +667,56 @@ async function getMountedCredentials(): Promise<Credential[]> {
 
 function createFileSystemID(domain: string, username: string) {
   return `webdavfs://${domain}/${username}`;
+}
+
+function requestedEntryPaths(options: GetActionsOptions) {
+  const entryPaths = Array.isArray(options.entryPaths)
+    ? options.entryPaths.filter(entryPath => typeof entryPath === 'string')
+    : [];
+  if (entryPaths.length) return entryPaths;
+  return typeof options.entryPath === 'string' ? [options.entryPath] : [];
+}
+
+function parentEntryPath(entryPath: string) {
+  if (entryPath === '/') return '/';
+  const separator = entryPath.lastIndexOf('/');
+  return separator <= 0 ? '/' : entryPath.slice(0, separator);
+}
+
+function isStrictDescendant(entryPath: string, directoryPath: string) {
+  if (directoryPath === '/') return entryPath !== '/' && entryPath.startsWith('/');
+  return entryPath.startsWith(`${directoryPath}/`);
+}
+
+function joinEntryPath(directoryPath: string, name: string) {
+  return directoryPath === '/' ? `/${name}` : `${directoryPath}/${name}`;
+}
+
+function toArrayBuffer(value: any): ArrayBuffer {
+  if (value instanceof ArrayBuffer) return value;
+  if (ArrayBuffer.isView(value)) {
+    const bytes = new Uint8Array(value.byteLength);
+    bytes.set(new Uint8Array(value.buffer, value.byteOffset, value.byteLength));
+    return bytes.buffer;
+  }
+  throw new Error('WebDAV returned an unsupported file content type');
+}
+
+function getFileId(stat: any): string | undefined {
+  const properties = stat.props || {};
+  const fileId = properties['oc:id'] ?? properties['{http://owncloud.org/ns}id'] ??
+    properties.id ?? stat.id ?? stat.fileId ?? properties.fileId ??
+    stat.fileid ?? properties.fileid ?? properties['nc:id'] ??
+    properties['{http://owncloud.org/ns}fileid'] ??
+    properties['oc:fileid'] ?? properties['nc:fileid'] ??
+    properties['{http://nextcloud.org/ns}fileid'];
+  return fileId === undefined || fileId === null ? undefined : String(fileId);
+}
+
+function isClientHttpError(error: any) {
+  const status = error?.status || error?.response?.status ||
+    Number(error?.message?.match(/status code (\d+)/)?.[1]);
+  return Number.isFinite(status) && status > 0 && status < 500;
 }
 
 function fromStat(stat: any): chrome.fileSystemProvider.EntryMetadata {

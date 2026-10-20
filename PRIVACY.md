@@ -14,9 +14,9 @@ To provide this functionality, the extension processes:
 
 - the server's HTTPS address, the name assigned to the volume, the username, and the password or app password required to authenticate;
 - file and folder names and paths, sizes, dates, and other metadata requested by the Files app;
-- file contents during read and write operations. Data needed to resume a write operation may be temporarily stored in the extension's IndexedDB database.
+- file contents during read and write operations. Data needed to resume a write operation may be temporarily stored in the extension's IndexedDB database. Files and metadata that the user pins for offline access are stored in a separate local IndexedDB cache until unpinned or the volume is unmounted.
 
-Credentials and information about mounted servers are stored in the extension's local storage (`chrome.storage.local`) to restore volumes after the service worker or device restarts. File-operation records are stored in IndexedDB and removed when the operation completes or during operation recovery. Data is not sent to the developer, and the extension does not use analytics, advertising, or tracking services.
+Credentials and information about mounted servers are stored in the extension's local storage (`chrome.storage.local`) to restore volumes after the service worker or device restarts. File-operation records are stored in IndexedDB and removed when the operation completes or during operation recovery. Offline-pinned files remain in local IndexedDB until unpinned or unmounted; unmounting removes the volume's offline cache. Data is not sent to the developer, and the extension does not use analytics, advertising, or tracking services.
 
 ## Transmission and sharing
 
@@ -24,13 +24,14 @@ WebDAV requests, credentials, and file contents are transmitted directly to the 
 
 For WebDAV compatibility, the extension's network rules modify certain request headers sent to the authorized server. The rules are limited to the HTTPS origin authorized by the user. Affected headers include User-Agent, Cookie, and `Sec-Fetch`/`Origin` headers. `Set-Cookie` headers received from that server are removed. The extension does not use browser cookies to authenticate these requests.
 
-The extension may open a browser tab to the server's Files page when the user selects the “Open on web” action. In that case, the server address and selected path are included in the URL that is opened.
+The extension may open a browser tab to the server's Files page when the user selects the “Open on web” action. In that case, the server address and selected path are included in the URL that is opened. When the user selects SHARE, the extension creates a public link through the configured Nextcloud server and displays it in an extension page. The user may copy that link to the system clipboard; anyone with the public link may be able to access the shared item according to the server's sharing settings.
 
 ## Permission justifications
 
 - **`fileSystemProvider`**: required to expose the WebDAV server as network storage in the ChromeOS Files app and handle file operations requested by the user.
 - **`declarativeNetRequestWithHostAccess`**: required to apply the header modifications needed for WebDAV compatibility. Host access is optional and requested for the server selected by the user; the rules apply only to that host.
 - **`storage`**: required to store mount information locally and restore volumes after restarts. Credentials are used only to authenticate requests to the configured server.
+- **`clipboardWrite`**: required to copy a public link to the clipboard after the user selects the copy control.
 
 ## Remote code
 

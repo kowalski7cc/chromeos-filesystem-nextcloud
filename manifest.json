@@ -11,7 +11,8 @@
   "permissions": [
     "fileSystemProvider",
     "storage",
-    "declarativeNetRequestWithHostAccess"
+    "declarativeNetRequestWithHostAccess",
+    "clipboardWrite"
   ],
   "optional_host_permissions": [
     "https://*/"
