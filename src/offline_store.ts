@@ -30,11 +30,9 @@ export async function getOfflineEntry(
 ): Promise<OfflineEntryRecord | undefined> {
   const database = await openDatabase();
   const transaction = database.transaction(STORE_NAME, 'readonly');
-  const complete = transactionComplete(transaction);
   const request = transaction.objectStore(STORE_NAME)
     .index('fileSystemPath').getAll([fileSystemId, filePath]);
   const records = await requestResult<OfflineEntryRecord[]>(request);
-  await complete;
   return records.reduce<OfflineEntryRecord | undefined>((latest, record) =>
     !latest || record.cachedAt > latest.cachedAt ? record : latest, undefined);
 }
@@ -44,10 +42,8 @@ export async function getOfflineEntries(
 ): Promise<OfflineEntryRecord[]> {
   const database = await openDatabase();
   const transaction = database.transaction(STORE_NAME, 'readonly');
-  const complete = transactionComplete(transaction);
   const request = transaction.objectStore(STORE_NAME).index('fileSystemId').getAll(fileSystemId);
   const records = await requestResult<OfflineEntryRecord[]>(request);
-  await complete;
   return records;
 }
 
