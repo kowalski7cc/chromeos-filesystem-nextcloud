@@ -11,6 +11,13 @@ import {
   removeOpenedFile,
   updateOpenedFile,
 } from './opened_files_store';
+import {
+  buildNextcloudFilesUrl,
+  getOpenInWebActions,
+  getNextcloudFileMetadata,
+  NEXTCLOUD_FILE_INFO_PROPFIND_BODY,
+  OPEN_IN_WEB_ACTION,
+} from './nextcloud_files';
 import Proxy from './proxy';
 
 type ServerType = 'nc' | 'oc'; // Nextcloud/ownCloud
@@ -30,6 +37,7 @@ interface MountedStorage {
 
 interface FileSystemProps {
   server: ServerType
+  domain: string
   client: Client
   metadataCache: MetadataCache
   filePathConverter: PathConverter
@@ -45,6 +53,55 @@ export default class WebDAVFS {
     this.#proxy = proxy;
     this.#ready = this.#resume();
     this.#assignEventHandlers();
+  }
+
+  async onGetActionsRequested(
+    options: chrome.fileSystemProvider.GetActionsRequestedOptions
+  ): Promise<[chrome.fileSystemProvider.Action[]]> {
+    const fileSystem = this.#fileSystemMap[options.fileSystemId];
+    if (!fileSystem) throw new Error('Mounted filesystem is unavailable');
+    return getOpenInWebActions(
+      fileSystem.server,
+      options.entryPaths.length,
+      chrome.i18n.getMessage('openInWeb')
+    );
+  }
+
+  async onExecuteActionRequested(
+    options: chrome.fileSystemProvider.ExecuteActionRequestedOptions
+  ) {
+    if (options.actionId !== OPEN_IN_WEB_ACTION)
+      throw new Error(`Unsupported file action: ${options.actionId}`);
+    if (options.entryPaths.length !== 1)
+      throw new Error('Open in web requires exactly one file or directory');
+
+    const fileSystem = this.#fileSystemMap[options.fileSystemId];
+    if (!fileSystem) throw new Error('Mounted filesystem is unavailable');
+    if (fileSystem.server !== 'nc')
+      throw new Error('Open in web is only available for Nextcloud mounts');
+
+    const [entryPath] = options.entryPaths;
+    const response = await fileSystem.client.customRequest(
+      fileSystem.filePathConverter(entryPath),
+      {
+        method: 'PROPFIND',
+        headers: {
+          'Content-Type': 'application/xml; charset=utf-8',
+          Depth: '0',
+        },
+        data: NEXTCLOUD_FILE_INFO_PROPFIND_BODY,
+      }
+    );
+    const { fileId, isDirectory } =
+      getNextcloudFileMetadata(await response.text());
+    await chrome.tabs.create({
+      url: buildNextcloudFilesUrl(
+        fileSystem.domain,
+        entryPath,
+        isDirectory,
+        fileId
+      ),
+    });
   }
 
   async isMounted(domain: string, username: string) {
@@ -424,7 +481,7 @@ export default class WebDAVFS {
       path => `/uploads/${username}${path}`;
 
     return {
-      server, client, metadataCache, filePathConverter, uploadPathConverter,
+      server, domain, client, metadataCache, filePathConverter, uploadPathConverter,
     };
   };
 }

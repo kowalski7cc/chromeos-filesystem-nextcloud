@@ -90,5 +90,9 @@
   "mounting": {
     "message": "Csatlakoztatás...",
     "description": "Status text while mounting the instance"
+  },
+  "openInWeb": {
+    "message": "Megnyitás a weben",
+    "description": "Context-menu action to open a file or directory in Nextcloud Files"
   }
 }

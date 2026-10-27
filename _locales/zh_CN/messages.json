@@ -90,5 +90,9 @@
   "mounting": {
     "message": "正在挂载...",
     "description": "Status text while mounting the instance"
+  },
+  "openInWeb": {
+    "message": "在网页中打开",
+    "description": "Context-menu action to open a file or directory in Nextcloud Files"
   }
 }
