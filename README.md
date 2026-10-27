@@ -12,7 +12,12 @@ Forked from [yoichiro/chromeos-filesystem-nextcloud](https://github.com/yuntan/c
 - Works as a Manifest V3 extension with a service worker background page
 - Uses declarative network request rules for host-scoped WebDAV compatibility
 - Supports Nextcloud login and WebDAV flows through the browser extension environment
+- Opens Nextcloud files and directories in Files from the ChromeOS context menu
 - Keeps state resilient across Chrome service-worker restarts
+
+The **Open in web** action is available for Nextcloud mounts. Files open in
+preview mode, and multiple selected items open in separate tabs. ownCloud
+mounts do not expose this Nextcloud-specific action.
 
 ## Requirements
 

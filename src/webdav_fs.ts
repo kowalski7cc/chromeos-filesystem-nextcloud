@@ -11,6 +11,13 @@ import {
   removeOpenedFile,
   updateOpenedFile,
 } from './opened_files_store';
+import {
+  buildNextcloudFilesUrl,
+  getOpenInWebActions,
+  getNextcloudFileMetadata,
+  NEXTCLOUD_FILE_INFO_PROPFIND_BODY,
+  OPEN_IN_WEB_ACTION,
+} from './nextcloud_files';
 import Proxy from './proxy';
 
 type ServerType = 'nc' | 'oc'; // Nextcloud/ownCloud
@@ -30,6 +37,7 @@ interface MountedStorage {
 
 interface FileSystemProps {
   server: ServerType
+  domain: string
   client: Client
   metadataCache: MetadataCache
   filePathConverter: PathConverter
@@ -39,12 +47,71 @@ interface FileSystemProps {
 export default class WebDAVFS {
   #proxy: Proxy;
   #fileSystemMap: { [fileSystemId: string]: FileSystemProps } = {};
-  #ready: Promise<void> = Promise.resolve();
+  #mountState: Promise<{
+    fileSystems: chrome.fileSystemProvider.FileSystemInfo[]
+    mountedCredentials: Credential[]
+    mountedIds: Set<string>
+  }>;
+  #fileSystemsReady: Promise<void>;
+  #ready: Promise<void>;
+  #mountedFileSystemsLoaded = false;
 
   constructor(proxy: Proxy) {
     this.#proxy = proxy;
+    this.#mountState = this.#loadMountedFileSystems();
+    this.#fileSystemsReady = this.#mountState.then(() => undefined);
     this.#ready = this.#resume();
     this.#assignEventHandlers();
+  }
+
+  async onGetActionsRequested(
+    options: chrome.fileSystemProvider.GetActionsRequestedOptions
+  ): Promise<[chrome.fileSystemProvider.Action[]]> {
+    const fileSystem = this.#fileSystemMap[options.fileSystemId];
+    if (!fileSystem && this.#mountedFileSystemsLoaded) return [[]];
+    return getOpenInWebActions(
+      fileSystem?.server,
+      options.entryPaths.length,
+      chrome.i18n.getMessage('openInWeb')
+    );
+  }
+
+  async onExecuteActionRequested(
+    options: chrome.fileSystemProvider.ExecuteActionRequestedOptions
+  ) {
+    if (options.actionId !== OPEN_IN_WEB_ACTION)
+      throw new Error(`Unsupported file action: ${options.actionId}`);
+    if (options.entryPaths.length === 0)
+      throw new Error('Open in web requires at least one file or directory');
+
+    const fileSystem = this.#fileSystemMap[options.fileSystemId];
+    if (!fileSystem) throw new Error('Mounted filesystem is unavailable');
+    if (fileSystem.server !== 'nc')
+      throw new Error('Open in web is only available for Nextcloud mounts');
+
+    const urls = await Promise.all(options.entryPaths.map(async entryPath => {
+      const response = await fileSystem.client.customRequest(
+        fileSystem.filePathConverter(entryPath),
+        {
+          method: 'PROPFIND',
+          headers: {
+            'Content-Type': 'application/xml; charset=utf-8',
+            Depth: '0',
+          },
+          data: NEXTCLOUD_FILE_INFO_PROPFIND_BODY,
+        }
+      );
+      const { fileId, isDirectory } =
+        getNextcloudFileMetadata(await response.text());
+      return buildNextcloudFilesUrl(
+        fileSystem.domain,
+        entryPath,
+        isDirectory,
+        fileId
+      );
+    }));
+
+    await Promise.all(urls.map(url => chrome.tabs.create({ url })));
   }
 
   async isMounted(domain: string, username: string) {
@@ -347,7 +414,20 @@ export default class WebDAVFS {
 
       (chrome.fileSystemProvider as any)[name].addListener(
         (options: any, successCallback: Function, errorCallback: Function) => {
-            this.#ready.then(() => (this as any)[name](options)).then((result: void | Array<any>) => {
+            if (name === 'onGetActionsRequested') {
+              Promise.resolve((this as any)[name](options)).then((result: void | Array<any>) => {
+                successCallback(...(result || []));
+              }).catch((error: string | Error) => {
+                if (error instanceof Error) console.error(error);
+                errorCallback(typeof error === 'string' ? error : 'FAILED');
+              });
+              return;
+            }
+
+            const ready = name === 'onExecuteActionRequested'
+              ? this.#fileSystemsReady
+              : this.#ready;
+          ready.then(() => (this as any)[name](options)).then((result: void | Array<any>) => {
             successCallback(...(result || []));
           }).catch((error: string | Error) => {
             if (error instanceof Error) console.error(error);
@@ -364,20 +444,7 @@ export default class WebDAVFS {
   #resume = async () => {
     console.log('WebDAVFS.resume');
 
-    const credentials = await getMountedCredentials();
-    const fileSystems: chrome.fileSystemProvider.FileSystemInfo[] =
-      await new Promise(resolve => chrome.fileSystemProvider.getAll(resolve));
-    const mountedIds = new Set(fileSystems.map(fileSystem => fileSystem.fileSystemId));
-    const mountedCredentials = credentials.filter(credential => {
-      const fileSystemId = createFileSystemID(credential.domain, credential.username);
-      return mountedIds.has(fileSystemId);
-    });
-
-    for (const credential of mountedCredentials) {
-      const { domain, username } = credential;
-      const fileSystemId = createFileSystemID(domain, username);
-      this.#fileSystemMap[fileSystemId] = this.#getFileSystemProps(credential);
-    }
+    const { fileSystems, mountedCredentials, mountedIds } = await this.#mountState;
 
     await this.#proxy.reconcile(mountedCredentials.map(credential => credential.domain));
 
@@ -412,6 +479,26 @@ export default class WebDAVFS {
     }
   };
 
+  #loadMountedFileSystems = async () => {
+    const credentials = await getMountedCredentials();
+    const fileSystems: chrome.fileSystemProvider.FileSystemInfo[] =
+      await new Promise(resolve => chrome.fileSystemProvider.getAll(resolve));
+    const mountedIds = new Set(fileSystems.map(fileSystem => fileSystem.fileSystemId));
+    const mountedCredentials = credentials.filter(credential => {
+      const fileSystemId = createFileSystemID(credential.domain, credential.username);
+      return mountedIds.has(fileSystemId);
+    });
+
+    for (const credential of mountedCredentials) {
+      const { domain, username } = credential;
+      const fileSystemId = createFileSystemID(domain, username);
+      this.#fileSystemMap[fileSystemId] = this.#getFileSystemProps(credential);
+    }
+
+    this.#mountedFileSystemsLoaded = true;
+    return { fileSystems, mountedCredentials, mountedIds };
+  };
+
   #getFileSystemProps = (credential: Credential) => {
     const { domain, server, username, password } = credential;
 
@@ -424,7 +511,7 @@ export default class WebDAVFS {
       path => `/uploads/${username}${path}`;
 
     return {
-      server, client, metadataCache, filePathConverter, uploadPathConverter,
+      server, domain, client, metadataCache, filePathConverter, uploadPathConverter,
     };
   };
 }
