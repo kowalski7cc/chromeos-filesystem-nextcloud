@@ -94,6 +94,7 @@ This project targets modern Chrome extension requirements:
 Useful commands:
 
 - npm run build: build the extension for development
+- npm run typecheck: run the strict TypeScript check
 - npm run package: create the distributable zip archive
 - npm test: run the project test suite
 

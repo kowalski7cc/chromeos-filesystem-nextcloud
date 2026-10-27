@@ -24,6 +24,10 @@ interface Credential {
   password: string
 }
 
+interface MountedStorage {
+  mountedCredentials?: Record<string, Credential>
+}
+
 interface FileSystemProps {
   server: ServerType
   client: Client
@@ -104,7 +108,7 @@ export default class WebDAVFS {
   }
 
   async onReadDirectoryRequested(
-    options: chrome.fileSystemProvider.DirectoryPathRequestedEventOptions
+    options: chrome.fileSystemProvider.ReadDirectoryRequestedOptions
   ) {
     const { fileSystemId, directoryPath } = options;
     console.log(`WebDAVFS.onReadDirectoryRequested: directoryPath=${directoryPath}`);
@@ -122,7 +126,7 @@ export default class WebDAVFS {
   }
 
   async onGetMetadataRequested(
-    options: chrome.fileSystemProvider.MetadataRequestedEventOptions
+    options: chrome.fileSystemProvider.GetMetadataRequestedOptions
   ) {
     const { fileSystemId, entryPath, thumbnail } = options;
     console.log(`WebDAVFS.onGetMetadataRequested: entryPath=${entryPath}, thumbnail=${thumbnail}`);
@@ -142,7 +146,7 @@ export default class WebDAVFS {
   }
 
   async onOpenFileRequested(
-    options: chrome.fileSystemProvider.OpenFileRequestedEventOptions
+    options: chrome.fileSystemProvider.OpenFileRequestedOptions
   ) {
     const { fileSystemId, requestId, filePath, mode } = options;
     console.log(`WebDAVFS.onOpenFileRequested: requestId=${requestId}, filePath='${filePath}', mode=${mode}`);
@@ -171,7 +175,7 @@ export default class WebDAVFS {
   }
 
   async onCloseFileRequested(
-    options: chrome.fileSystemProvider.OpenedFileRequestedEventOptions
+    options: chrome.fileSystemProvider.CloseFileRequestedOptions
   ) {
     const { fileSystemId, openRequestId } = options;
     const openedFile = await getOpenedFile(fileSystemId, openRequestId);
@@ -197,7 +201,7 @@ export default class WebDAVFS {
   }
 
   async onReadFileRequested(
-    options: chrome.fileSystemProvider.OpenedFileOffsetRequestedEventOptions
+    options: chrome.fileSystemProvider.ReadFileRequestedOptions
   ) {
     const { fileSystemId, openRequestId, offset, length } = options;
     const openedFile = await getOpenedFile(fileSystemId, openRequestId);
@@ -226,7 +230,7 @@ export default class WebDAVFS {
   }
 
   async onWriteFileRequested(
-    options: chrome.fileSystemProvider.OpenedFileIoRequestedEventOptions
+    options: chrome.fileSystemProvider.WriteFileRequestedOptions
   ) {
     const { fileSystemId, openRequestId, offset, data } = options;
     const openedFile = await getOpenedFile(fileSystemId, openRequestId);
@@ -259,7 +263,7 @@ export default class WebDAVFS {
   }
 
   async onCreateDirectoryRequested(
-    options: chrome.fileSystemProvider.DirectoryPathRecursiveRequestedEventOptions
+    options: chrome.fileSystemProvider.CreateDirectoryRequestedOptions
   ) {
     const { fileSystemId, directoryPath } = options;
     console.log(`WebDAVFS.onCreateDirectoryRequested: directoryPath=${directoryPath}`);
@@ -272,19 +276,19 @@ export default class WebDAVFS {
   }
 
   async onDeleteEntryRequested(
-    options: chrome.fileSystemProvider.EntryPathRecursiveRequestedEventOptions
+    options: chrome.fileSystemProvider.DeleteEntryRequestedOptions
   ) {
     const { fileSystemId, entryPath } = options;
     console.log(`WebDAVFS.onDeleteEntryRequested: entryPath=${entryPath}`);
 
     const { client, metadataCache, filePathConverter } = this.#fileSystemMap[fileSystemId];
-    client.deleteFile(filePathConverter(entryPath));
+    await client.deleteFile(filePathConverter(entryPath));
 
     metadataCache.remove(entryPath);
   }
 
   async onCreateFileRequested(
-    options: chrome.fileSystemProvider.FilePathRequestedEventOptions
+    options: chrome.fileSystemProvider.CreateFileRequestedOptions
   ) {
     const { fileSystemId, filePath } = options;
     console.log(`WebDAVFS.onCreateFileRequested: filePath=${filePath}`);
@@ -297,7 +301,7 @@ export default class WebDAVFS {
   }
 
   async onCopyEntryRequested(
-    options: chrome.fileSystemProvider.SourceTargetPathRequestedEventOptions
+    options: chrome.fileSystemProvider.CopyEntryRequestedOptions
   ) {
     const { fileSystemId, sourcePath, targetPath } = options;
     console.log(`WebDAVFS.onCopyEntryRequested: sourcePath=${sourcePath}, targetPath=${targetPath}`);
@@ -310,7 +314,7 @@ export default class WebDAVFS {
   }
 
   async onMoveEntryRequested(
-    options: chrome.fileSystemProvider.SourceTargetPathRequestedEventOptions
+    options: chrome.fileSystemProvider.MoveEntryRequestedOptions
   ) {
     const { fileSystemId, sourcePath, targetPath } = options;
     console.log(`WebDAVFS.onMoveEntryRequested: sourcePath=${sourcePath}, targetPath=${targetPath}`);
@@ -323,7 +327,7 @@ export default class WebDAVFS {
   }
 
   async onTruncateRequested(
-    options: chrome.fileSystemProvider.FilePathLengthRequestedEventOptions
+    options: chrome.fileSystemProvider.TruncateRequestedOptions
   ) {
     const { filePath, length } = options;
     console.log(`WebDAVFS.onTruncateRequested: filePath=${filePath}, length=${length}`);
@@ -331,7 +335,7 @@ export default class WebDAVFS {
   }
 
   async onAbortRequested(
-    options: chrome.fileSystemProvider.OperationRequestedEventOptions
+    options: chrome.fileSystemProvider.AbortRequestedOptions
   ) {
     const { operationRequestId } = options;
     console.log(`WebDAVFS.onAbortRequested: operationRequestId=${operationRequestId}`)
@@ -428,21 +432,23 @@ export default class WebDAVFS {
 async function storeMountedCredential(
   fileSystemId: string, credential: Credential
 ) {
-  let { mountedCredentials } = await browser.storage.local.get();
-  mountedCredentials = mountedCredentials || {};
+  const { mountedCredentials = {} } =
+    await browser.storage.local.get<MountedStorage>();
   mountedCredentials[fileSystemId] = credential;
   await browser.storage.local.set({ mountedCredentials });
 }
 
 async function removeMountedCredential(fileSystemId: string) {
-  const { mountedCredentials } = await browser.storage.local.get();
+  const { mountedCredentials } =
+    await browser.storage.local.get<MountedStorage>();
   if (!mountedCredentials) return;
   delete mountedCredentials[fileSystemId];
   await browser.storage.local.set({ mountedCredentials });
 }
 
 async function getMountedCredentials(): Promise<Credential[]> {
-  const { mountedCredentials } = await browser.storage.local.get();
+  const { mountedCredentials } =
+    await browser.storage.local.get<MountedStorage>();
   return Object.values(mountedCredentials || {});
 }
 
