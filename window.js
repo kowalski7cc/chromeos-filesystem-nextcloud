@@ -58,6 +58,20 @@ async function ncLoginFlow(domain) {
 
 applyLocale();
 
+document.querySelector('#name').addEventListener('keydown', ev => {
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    document.querySelector('#domain').focus();
+  }
+});
+
+document.querySelector('#domain').addEventListener('keydown', ev => {
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    document.querySelector('#btnOk').focus();
+  }
+});
+
 document.querySelector('#btnOk').addEventListener('click', async ev => {
   const btnOk = ev.target;
   btnOk.setAttribute('disabled', 'true');
