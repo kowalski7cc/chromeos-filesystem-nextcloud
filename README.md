@@ -16,7 +16,8 @@ Forked from [yoichiro/chromeos-filesystem-nextcloud](https://github.com/yuntan/c
 - Keeps state resilient across Chrome service-worker restarts
 
 The **Open in web** action is available for Nextcloud mounts. Files open in
-preview mode; ownCloud mounts do not expose this Nextcloud-specific action.
+preview mode, and multiple selected items open in separate tabs. ownCloud
+mounts do not expose this Nextcloud-specific action.
 
 ## Requirements
 

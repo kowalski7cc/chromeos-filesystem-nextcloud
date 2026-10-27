@@ -28,11 +28,11 @@ export function getNextcloudFileMetadata(xml: string): {
 }
 
 export function getOpenInWebActions(
-  server: 'nc' | 'oc',
+  server: 'nc' | 'oc' | undefined,
   entryCount: number,
   title: string
 ): [chrome.fileSystemProvider.Action[]] {
-  if (server !== 'nc' || entryCount !== 1) return [[]];
+  if (server === 'oc' || entryCount === 0) return [[]];
   return [[{ id: OPEN_IN_WEB_ACTION, title }]];
 }
 

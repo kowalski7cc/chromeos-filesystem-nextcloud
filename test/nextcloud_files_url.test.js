@@ -28,12 +28,18 @@ const {
   OPEN_IN_WEB_ACTION,
 } = helperModule.exports;
 
-test('the Open in web action is only returned for one Nextcloud entry', () => {
+test('the Open in web action is returned for one or more Nextcloud entries', () => {
   assert.deepEqual(getOpenInWebActions('nc', 1, 'Open in web'), [[
     { id: OPEN_IN_WEB_ACTION, title: 'Open in web' },
   ]]);
+  assert.deepEqual(getOpenInWebActions('nc', 2, 'Open in web'), [[
+    { id: OPEN_IN_WEB_ACTION, title: 'Open in web' },
+  ]]);
   assert.deepEqual(getOpenInWebActions('oc', 1, 'Open in web'), [[]]);
-  assert.deepEqual(getOpenInWebActions('nc', 2, 'Open in web'), [[]]);
+  assert.deepEqual(getOpenInWebActions('nc', 0, 'Open in web'), [[]]);
+  assert.deepEqual(getOpenInWebActions(undefined, 1, 'Open in web'), [[
+    { id: OPEN_IN_WEB_ACTION, title: 'Open in web' },
+  ]]);
 });
 
 test('the file info request explicitly asks Nextcloud for its file ID', () => {
