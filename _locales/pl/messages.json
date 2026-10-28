@@ -1,42 +1,130 @@
 {
-  "appName": { "message": "Usługa pamięci masowej ChromeOS dla Nextcloud" },
-  "appDescription": { "message": "Nieoficjalna usługa pamięci masowej Nextcloud/ownCloud dla Chrome OS" },
-  "shortName": { "message": "Nextcloud" },
-  "mountHeader": { "message": "Zamontuj nowy serwer WebDAV" },
-  "mount": { "message": "Zamontuj" },
-  "keep": { "message": "Zachowaj" },
-  "mountAttempt": { "message": "Trwa montowanie instancji..." },
-  "mountSuccess": { "message": "Pomyślnie zamontowano." },
-  "mountFail": { "message": "Nie udało się zamontować." },
-  "url": { "message": "URL" },
-  "authTypeNone": { "message": "Brak" },
-  "authTypeBasic": { "message": "Podstawowe" },
-  "authTypeDigest": { "message": "Digest" },
-  "username": { "message": "Nazwa użytkownika" },
-  "password": { "message": "Hasło" },
-  "keepPasswordYes": { "message": "Tak" },
-  "keepPasswordNo": { "message": "Nie" },
-  "loginTitle": { "message": "Zaloguj się do Nextcloud" },
-  "nameLabel": { "message": "Nazwa" },
-  "serverDomain": { "message": "Domena serwera" },
-  "useUsernamePassword": { "message": "Użyj nazwy użytkownika i hasła (ownCloud)" },
-  "login": { "message": "Zaloguj się" },
-  "mounting": { "message": "Montowanie..." },
-  "openInWeb": { "message": "Otwórz w przeglądarce" },
-  "settingsTitle": { "message": "Ustawienia wydajności transferu" },
-  "settingsDescription": { "message": "Te ustawienia globalne dotyczą wszystkich zamontowanych serwerów. Zmiany dotyczą nowo otwieranych plików." },
-  "uploadChunkSize": { "message": "Rozmiar części wysyłania" },
-  "uploadChunkSizeHint": { "message": "Wysyłanie Nextcloud wymaga części o rozmiarze co najmniej 5 MiB. Dozwolone: 5–100 MiB." },
-  "downloadReadAheadSize": { "message": "Rozmiar z wyprzedzeniem pobierania" },
-  "downloadReadAheadSizeHint": { "message": "Liczba bajtów pobieranych w każdym zakresie z wyprzedzeniem. Dozwolone: 1–64 MiB." },
-  "downloadCacheLimitLabel": { "message": "Limit pamięci podręcznej pobierania" },
-  "downloadCacheSizeHint": { "message": "Maksymalna ilość pamięci zajmowana przez buforowane zakresy; musi wynosić co najmniej tyle, co jeden zakres pobierania z wyprzedzeniem." },
-  "sequentialPrefetch": { "message": "Wyprzedzające pobieranie sekwencyjne" },
-  "sequentialPrefetchHint": { "message": "Pobieraj następny zakres podczas odczytu sekwencyjnego." },
-  "resetSettings": { "message": "Przywróć ustawienia domyślne" },
-  "saveSettings": { "message": "Zapisz ustawienia" },
-  "settingsSaved": { "message": "Ustawienia zostały zapisane." },
-  "settingsReset": { "message": "Przywrócono ustawienia domyślne." },
-  "settingsLoadError": { "message": "Nie udało się wczytać ustawień. Sprawdź pamięć rozszerzenia i odśwież tę stronę." },
-  "settingsSaveError": { "message": "Nie udało się zapisać ustawień. Sprawdź wartości i spróbuj ponownie." }
+  "appName": {
+    "message": "Usługa pamięci masowej ChromeOS dla Nextcloud"
+  },
+  "appDescription": {
+    "message": "Nieoficjalna usługa pamięci masowej Nextcloud/ownCloud dla Chrome OS"
+  },
+  "shortName": {
+    "message": "Nextcloud"
+  },
+  "mountHeader": {
+    "message": "Zamontuj nowy serwer WebDAV"
+  },
+  "mount": {
+    "message": "Zamontuj"
+  },
+  "keep": {
+    "message": "Zachowaj"
+  },
+  "mountAttempt": {
+    "message": "Trwa montowanie instancji..."
+  },
+  "mountSuccess": {
+    "message": "Pomyślnie zamontowano."
+  },
+  "mountFail": {
+    "message": "Nie udało się zamontować."
+  },
+  "url": {
+    "message": "URL"
+  },
+  "authTypeNone": {
+    "message": "Brak"
+  },
+  "authTypeBasic": {
+    "message": "Podstawowe"
+  },
+  "authTypeDigest": {
+    "message": "Digest"
+  },
+  "username": {
+    "message": "Nazwa użytkownika"
+  },
+  "password": {
+    "message": "Hasło"
+  },
+  "keepPasswordYes": {
+    "message": "Tak"
+  },
+  "keepPasswordNo": {
+    "message": "Nie"
+  },
+  "loginTitle": {
+    "message": "Zaloguj się do Nextcloud"
+  },
+  "nameLabel": {
+    "message": "Nazwa"
+  },
+  "useNameFromNextcloudInstance": {
+    "message": "Use name from Nextcloud instance if available",
+    "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
+  },
+  "serverDomain": {
+    "message": "Domena serwera"
+  },
+  "advancedSettings": {
+    "message": "Advanced settings",
+    "description": "Summary label for the advanced settings expander."
+  },
+  "useUsernamePassword": {
+    "message": "Użyj nazwy użytkownika i hasła (ownCloud)"
+  },
+  "login": {
+    "message": "Zaloguj się"
+  },
+  "mounting": {
+    "message": "Montowanie..."
+  },
+  "openInWeb": {
+    "message": "Otwórz w przeglądarce"
+  },
+  "settingsTitle": {
+    "message": "Ustawienia wydajności transferu"
+  },
+  "settingsDescription": {
+    "message": "Te ustawienia globalne dotyczą wszystkich zamontowanych serwerów. Zmiany dotyczą nowo otwieranych plików."
+  },
+  "uploadChunkSize": {
+    "message": "Rozmiar części wysyłania"
+  },
+  "uploadChunkSizeHint": {
+    "message": "Wysyłanie Nextcloud wymaga części o rozmiarze co najmniej 5 MiB. Dozwolone: 5–100 MiB."
+  },
+  "downloadReadAheadSize": {
+    "message": "Rozmiar z wyprzedzeniem pobierania"
+  },
+  "downloadReadAheadSizeHint": {
+    "message": "Liczba bajtów pobieranych w każdym zakresie z wyprzedzeniem. Dozwolone: 1–64 MiB."
+  },
+  "downloadCacheLimitLabel": {
+    "message": "Limit pamięci podręcznej pobierania"
+  },
+  "downloadCacheSizeHint": {
+    "message": "Maksymalna ilość pamięci zajmowana przez buforowane zakresy; musi wynosić co najmniej tyle, co jeden zakres pobierania z wyprzedzeniem."
+  },
+  "sequentialPrefetch": {
+    "message": "Wyprzedzające pobieranie sekwencyjne"
+  },
+  "sequentialPrefetchHint": {
+    "message": "Pobieraj następny zakres podczas odczytu sekwencyjnego."
+  },
+  "resetSettings": {
+    "message": "Przywróć ustawienia domyślne"
+  },
+  "saveSettings": {
+    "message": "Zapisz ustawienia"
+  },
+  "settingsSaved": {
+    "message": "Ustawienia zostały zapisane."
+  },
+  "settingsReset": {
+    "message": "Przywrócono ustawienia domyślne."
+  },
+  "settingsLoadError": {
+    "message": "Nie udało się wczytać ustawień. Sprawdź pamięć rozszerzenia i odśwież tę stronę."
+  },
+  "settingsSaveError": {
+    "message": "Nie udało się zapisać ustawień. Sprawdź wartości i spróbuj ponownie."
+  }
 }

@@ -4,11 +4,61 @@ function i18n(key, substitutions) {
   return chrome.i18n.getMessage(key, substitutions);
 }
 
+function parseInstanceNameFromCapabilities(data) {
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
+
+  const status = data?.ocs?.meta?.status;
+  if (status && status !== 'ok' && status !== 'success') {
+    return null;
+  }
+
+  const name = data?.ocs?.data?.capabilities?.theming?.name;
+  if (typeof name !== 'string') {
+    return null;
+  }
+
+  const trimmed = name.trim();
+  return trimmed || null;
+}
+
+async function fetchDefaultInstanceName(domain) {
+  const url = `https://${domain}/ocs/v2.php/cloud/capabilities?format=json`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'OCS-APIRequest': 'true',
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const status = data && typeof data === 'object' ? data?.ocs?.meta?.status : undefined;
+    if (status && status !== 'ok' && status !== 'success') {
+      return null;
+    }
+
+    return parseInstanceNameFromCapabilities(data);
+  } catch (error) {
+    console.warn('Could not fetch default instance name', error);
+    return null;
+  }
+}
+
 function applyLocale() {
   const nameLabel = document.querySelector('label[for="name"]');
   const domainLabel = document.querySelector('label[for="domain"]');
   const usernameLabel = document.querySelector('label[for="username"]');
   const passwordLabel = document.querySelector('label[for="password"]');
+  const useInstanceNameLabel = document.querySelector('.advanced-toggle-label');
+  const advancedSummary = document.querySelector('#advancedSettings summary');
   const summary = document.querySelector('#expander summary');
   const title = document.querySelector('h1');
   const button = document.querySelector('#btnOk');
@@ -18,6 +68,8 @@ function applyLocale() {
   title.textContent = i18n('loginTitle');
   if (nameLabel) nameLabel.textContent = i18n('nameLabel');
   if (domainLabel) domainLabel.textContent = i18n('serverDomain');
+  if (useInstanceNameLabel) useInstanceNameLabel.textContent = i18n('useNameFromNextcloudInstance');
+  if (advancedSummary) advancedSummary.textContent = i18n('advancedSettings');
   if (summary) summary.textContent = i18n('useUsernamePassword');
   if (usernameLabel) usernameLabel.textContent = i18n('username');
   if (passwordLabel) passwordLabel.textContent = i18n('password');
@@ -58,6 +110,26 @@ async function ncLoginFlow(domain) {
 
 applyLocale();
 
+const nameInput = document.querySelector('#name');
+const useInstanceNameInput = document.querySelector('#useInstanceName');
+const nameOverrideRow = document.querySelector('#nameOverrideRow');
+
+function syncAdvancedNameControls() {
+  const shouldUseInstanceName = !!useInstanceNameInput && useInstanceNameInput.checked;
+  if (nameOverrideRow) {
+    nameOverrideRow.hidden = shouldUseInstanceName;
+  }
+  if (shouldUseInstanceName && !nameInput.value) {
+    nameInput.value = 'Nextcloud';
+  }
+}
+
+useInstanceNameInput.addEventListener('change', syncAdvancedNameControls);
+
+nameInput.addEventListener('input', () => {
+  nameInput.dataset.userEdited = 'true';
+});
+
 document.querySelector('#name').addEventListener('keydown', ev => {
   if (ev.key === 'Enter') {
     ev.preventDefault();
@@ -76,17 +148,29 @@ document.querySelector('#btnOk').addEventListener('click', async ev => {
   const btnOk = ev.target;
   btnOk.setAttribute('disabled', 'true');
 
-  const name = document.querySelector('#name').value;
-  const domain = document.querySelector("#domain").value;
-  const username = document.querySelector("#username").value;
-  const password = document.querySelector("#password").value;
+  const domain = document.querySelector('#domain').value;
+  const username = document.querySelector('#username').value;
+  const password = document.querySelector('#password').value;
 
   const granted = await browser.permissions.request({
     origins: [`https://${domain}/`]
   });
   if (!granted) return;
 
-  const request = { server: 'oc', name, domain, username, password };
+  let resolvedName = nameInput.value || 'Nextcloud';
+  if (useInstanceNameInput && useInstanceNameInput.checked) {
+    const defaultName = await fetchDefaultInstanceName(domain);
+    resolvedName = defaultName || 'Nextcloud';
+    nameInput.value = resolvedName;
+  }
+
+  const request = {
+    server: 'oc',
+    name: resolvedName,
+    domain,
+    username,
+    password,
+  };
 
   const details = document.querySelector('#expander');
   if (!details.open) {
@@ -101,7 +185,7 @@ document.querySelector('#btnOk').addEventListener('click', async ev => {
     .catch(error => {
       console.error(error);
       message.innerText = error.message;
-      btnOk.removeAttribute("disabled");
+      btnOk.removeAttribute('disabled');
     });
 });
 
@@ -111,3 +195,14 @@ document.querySelector('#expander').addEventListener('toggle', ev => {
 
   button.textContent = details.open ? i18n('mount') : i18n('login');
 });
+
+if (useInstanceNameInput) {
+  syncAdvancedNameControls();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    parseInstanceNameFromCapabilities,
+    fetchDefaultInstanceName,
+  };
+}

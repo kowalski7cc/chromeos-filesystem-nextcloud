@@ -1,42 +1,130 @@
 {
-  "appName": { "message": "บริการพื้นที่เก็บข้อมูล ChromeOS สำหรับ Nextcloud" },
-  "appDescription": { "message": "บริการพื้นที่เก็บข้อมูล Nextcloud/ownCloud อย่างไม่เป็นทางการสำหรับ Chrome OS" },
-  "shortName": { "message": "Nextcloud" },
-  "mountHeader": { "message": "เมานต์เซิร์ฟเวอร์ WebDAV ใหม่" },
-  "mount": { "message": "เมานต์" },
-  "keep": { "message": "เก็บไว้" },
-  "mountAttempt": { "message": "กำลังพยายามเมานต์อินสแตนซ์..." },
-  "mountSuccess": { "message": "เมานต์สำเร็จ" },
-  "mountFail": { "message": "เมานต์ไม่สำเร็จ" },
-  "url": { "message": "URL" },
-  "authTypeNone": { "message": "ไม่มี" },
-  "authTypeBasic": { "message": "พื้นฐาน" },
-  "authTypeDigest": { "message": "Digest" },
-  "username": { "message": "ชื่อผู้ใช้" },
-  "password": { "message": "รหัสผ่าน" },
-  "keepPasswordYes": { "message": "ใช่" },
-  "keepPasswordNo": { "message": "ไม่" },
-  "loginTitle": { "message": "เข้าสู่ระบบ Nextcloud" },
-  "nameLabel": { "message": "ชื่อ" },
-  "serverDomain": { "message": "โดเมนเซิร์ฟเวอร์" },
-  "useUsernamePassword": { "message": "ใช้ชื่อผู้ใช้และรหัสผ่าน (ownCloud)" },
-  "login": { "message": "เข้าสู่ระบบ" },
-  "mounting": { "message": "กำลังเมานต์..." },
-  "openInWeb": { "message": "เปิดบนเว็บ" },
-  "settingsTitle": { "message": "การตั้งค่าประสิทธิภาพการถ่ายโอน" },
-  "settingsDescription": { "message": "การตั้งค่าส่วนกลางนี้ใช้กับเซิร์ฟเวอร์ที่เมานต์ทั้งหมด การเปลี่ยนแปลงมีผลกับไฟล์ที่เปิดใหม่" },
-  "uploadChunkSize": { "message": "ขนาดชิ้นข้อมูลอัปโหลด" },
-  "uploadChunkSizeHint": { "message": "การอัปโหลด Nextcloud ใช้ชิ้นข้อมูลขนาดอย่างน้อย 5 MiB ค่าที่อนุญาต: 5–100 MiB" },
-  "downloadReadAheadSize": { "message": "ขนาดการอ่านล่วงหน้าสำหรับดาวน์โหลด" },
-  "downloadReadAheadSizeHint": { "message": "จำนวนไบต์ที่ดึงมาต่อช่วงการอ่านล่วงหน้า ค่าที่อนุญาต: 1–64 MiB" },
-  "downloadCacheLimitLabel": { "message": "ขีดจำกัดแคชดาวน์โหลด" },
-  "downloadCacheSizeHint": { "message": "หน่วยความจำสูงสุดที่เก็บไว้สำหรับช่วงข้อมูลในแคช ต้องไม่น้อยกว่าหนึ่งช่วงการอ่านล่วงหน้า" },
-  "sequentialPrefetch": { "message": "ดึงข้อมูลดาวน์โหลดล่วงหน้าตามลำดับ" },
-  "sequentialPrefetchHint": { "message": "ดึงช่วงข้อมูลถัดไปเมื่อมีการอ่านต่อเนื่องตามลำดับ" },
-  "resetSettings": { "message": "คืนค่าเริ่มต้น" },
-  "saveSettings": { "message": "บันทึกการตั้งค่า" },
-  "settingsSaved": { "message": "บันทึกการตั้งค่าแล้ว" },
-  "settingsReset": { "message": "คืนค่าเริ่มต้นแล้ว" },
-  "settingsLoadError": { "message": "โหลดการตั้งค่าไม่ได้ โปรดตรวจสอบพื้นที่จัดเก็บของส่วนขยายแล้วโหลดหน้านี้ใหม่" },
-  "settingsSaveError": { "message": "บันทึกการตั้งค่าไม่ได้ โปรดตรวจสอบค่าแล้วลองอีกครั้ง" }
+  "appName": {
+    "message": "บริการพื้นที่เก็บข้อมูล ChromeOS สำหรับ Nextcloud"
+  },
+  "appDescription": {
+    "message": "บริการพื้นที่เก็บข้อมูล Nextcloud/ownCloud อย่างไม่เป็นทางการสำหรับ Chrome OS"
+  },
+  "shortName": {
+    "message": "Nextcloud"
+  },
+  "mountHeader": {
+    "message": "เมานต์เซิร์ฟเวอร์ WebDAV ใหม่"
+  },
+  "mount": {
+    "message": "เมานต์"
+  },
+  "keep": {
+    "message": "เก็บไว้"
+  },
+  "mountAttempt": {
+    "message": "กำลังพยายามเมานต์อินสแตนซ์..."
+  },
+  "mountSuccess": {
+    "message": "เมานต์สำเร็จ"
+  },
+  "mountFail": {
+    "message": "เมานต์ไม่สำเร็จ"
+  },
+  "url": {
+    "message": "URL"
+  },
+  "authTypeNone": {
+    "message": "ไม่มี"
+  },
+  "authTypeBasic": {
+    "message": "พื้นฐาน"
+  },
+  "authTypeDigest": {
+    "message": "Digest"
+  },
+  "username": {
+    "message": "ชื่อผู้ใช้"
+  },
+  "password": {
+    "message": "รหัสผ่าน"
+  },
+  "keepPasswordYes": {
+    "message": "ใช่"
+  },
+  "keepPasswordNo": {
+    "message": "ไม่"
+  },
+  "loginTitle": {
+    "message": "เข้าสู่ระบบ Nextcloud"
+  },
+  "nameLabel": {
+    "message": "ชื่อ"
+  },
+  "useNameFromNextcloudInstance": {
+    "message": "Use name from Nextcloud instance if available",
+    "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
+  },
+  "serverDomain": {
+    "message": "โดเมนเซิร์ฟเวอร์"
+  },
+  "advancedSettings": {
+    "message": "Advanced settings",
+    "description": "Summary label for the advanced settings expander."
+  },
+  "useUsernamePassword": {
+    "message": "ใช้ชื่อผู้ใช้และรหัสผ่าน (ownCloud)"
+  },
+  "login": {
+    "message": "เข้าสู่ระบบ"
+  },
+  "mounting": {
+    "message": "กำลังเมานต์..."
+  },
+  "openInWeb": {
+    "message": "เปิดบนเว็บ"
+  },
+  "settingsTitle": {
+    "message": "การตั้งค่าประสิทธิภาพการถ่ายโอน"
+  },
+  "settingsDescription": {
+    "message": "การตั้งค่าส่วนกลางนี้ใช้กับเซิร์ฟเวอร์ที่เมานต์ทั้งหมด การเปลี่ยนแปลงมีผลกับไฟล์ที่เปิดใหม่"
+  },
+  "uploadChunkSize": {
+    "message": "ขนาดชิ้นข้อมูลอัปโหลด"
+  },
+  "uploadChunkSizeHint": {
+    "message": "การอัปโหลด Nextcloud ใช้ชิ้นข้อมูลขนาดอย่างน้อย 5 MiB ค่าที่อนุญาต: 5–100 MiB"
+  },
+  "downloadReadAheadSize": {
+    "message": "ขนาดการอ่านล่วงหน้าสำหรับดาวน์โหลด"
+  },
+  "downloadReadAheadSizeHint": {
+    "message": "จำนวนไบต์ที่ดึงมาต่อช่วงการอ่านล่วงหน้า ค่าที่อนุญาต: 1–64 MiB"
+  },
+  "downloadCacheLimitLabel": {
+    "message": "ขีดจำกัดแคชดาวน์โหลด"
+  },
+  "downloadCacheSizeHint": {
+    "message": "หน่วยความจำสูงสุดที่เก็บไว้สำหรับช่วงข้อมูลในแคช ต้องไม่น้อยกว่าหนึ่งช่วงการอ่านล่วงหน้า"
+  },
+  "sequentialPrefetch": {
+    "message": "ดึงข้อมูลดาวน์โหลดล่วงหน้าตามลำดับ"
+  },
+  "sequentialPrefetchHint": {
+    "message": "ดึงช่วงข้อมูลถัดไปเมื่อมีการอ่านต่อเนื่องตามลำดับ"
+  },
+  "resetSettings": {
+    "message": "คืนค่าเริ่มต้น"
+  },
+  "saveSettings": {
+    "message": "บันทึกการตั้งค่า"
+  },
+  "settingsSaved": {
+    "message": "บันทึกการตั้งค่าแล้ว"
+  },
+  "settingsReset": {
+    "message": "คืนค่าเริ่มต้นแล้ว"
+  },
+  "settingsLoadError": {
+    "message": "โหลดการตั้งค่าไม่ได้ โปรดตรวจสอบพื้นที่จัดเก็บของส่วนขยายแล้วโหลดหน้านี้ใหม่"
+  },
+  "settingsSaveError": {
+    "message": "บันทึกการตั้งค่าไม่ได้ โปรดตรวจสอบค่าแล้วลองอีกครั้ง"
+  }
 }
