@@ -105,6 +105,12 @@ export default class WebDAVFS {
     );
   }
 
+  async onConfigureRequested(
+    _options: chrome.fileSystemProvider.ConfigureRequestedOptions
+  ): Promise<void> {
+    await chrome.runtime.openOptionsPage();
+  }
+
   async onExecuteActionRequested(
     options: chrome.fileSystemProvider.ExecuteActionRequestedOptions
   ) {
