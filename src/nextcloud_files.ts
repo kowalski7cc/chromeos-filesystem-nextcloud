@@ -1,4 +1,6 @@
 export const OPEN_IN_WEB_ACTION = 'open-in-web';
+export const NEXTCLOUD_UPLOAD_CHUNK_SIZE = 10 * 1024 * 1024;
+export const NEXTCLOUD_MAX_UPLOAD_CHUNKS = 10000;
 
 export const NEXTCLOUD_FILE_INFO_PROPFIND_BODY =
   '<?xml version="1.0" encoding="UTF-8"?>' +
@@ -61,4 +63,89 @@ export function buildNextcloudFilesUrl(
   }
 
   return url.toString();
+}
+
+export function buildNextcloudFileDestination(
+  domain: string,
+  username: string,
+  filePath: string
+): string {
+  const origin = new URL(`https://${domain}`).origin;
+  const encodedPath = filePath
+    .split('/')
+    .map(segment => encodeURIComponent(segment))
+    .join('/');
+  return `${origin}/remote.php/dav/files/${encodeURIComponent(username)}${encodedPath}`;
+}
+
+export function getNextcloudUploadChunkCount(fileSize: number): number {
+  if (!Number.isSafeInteger(fileSize) || fileSize < 0)
+    throw new Error('Nextcloud upload size must be a non-negative safe integer');
+
+  const chunkCount = Math.ceil(fileSize / NEXTCLOUD_UPLOAD_CHUNK_SIZE);
+  if (chunkCount > NEXTCLOUD_MAX_UPLOAD_CHUNKS)
+    throw new Error(`Nextcloud uploads are limited to ${NEXTCLOUD_MAX_UPLOAD_CHUNKS} chunks`);
+  return chunkCount;
+}
+
+interface NextcloudUploadClient {
+  customRequest(
+    path: string,
+    options: {
+      method: string
+      headers?: Record<string, string>
+      data?: ArrayBuffer
+    }
+  ): Promise<unknown>
+}
+
+export async function createNextcloudUploadFolder(
+  client: NextcloudUploadClient,
+  uploadPath: string,
+  destination: string
+): Promise<void> {
+  await client.customRequest(uploadPath, {
+    method: 'MKCOL',
+    headers: { Destination: destination },
+  });
+}
+
+export async function uploadNextcloudFile(
+  client: NextcloudUploadClient,
+  uploadPath: string,
+  destinationPath: string,
+  destination: string,
+  buffer: ArrayBuffer
+): Promise<void> {
+  const fileSize = buffer.byteLength;
+  const chunkCount = getNextcloudUploadChunkCount(fileSize);
+
+  if (chunkCount === 0) {
+    await client.customRequest(destinationPath, {
+      method: 'PUT',
+      data: buffer,
+    });
+    await client.customRequest(`${uploadPath}/`, { method: 'DELETE' });
+    return;
+  }
+
+  const headers = {
+    Destination: destination,
+    'OC-Total-Length': String(fileSize),
+  };
+  for (let index = 0; index < chunkCount; index++) {
+    const start = index * NEXTCLOUD_UPLOAD_CHUNK_SIZE;
+    const end = Math.min(start + NEXTCLOUD_UPLOAD_CHUNK_SIZE, fileSize);
+    const chunkName = String(index + 1).padStart(5, '0');
+    await client.customRequest(`${uploadPath}/${chunkName}`, {
+      method: 'PUT',
+      headers,
+      data: buffer.slice(start, end),
+    });
+  }
+
+  await client.customRequest(`${uploadPath}/.file`, {
+    method: 'MOVE',
+    headers,
+  });
 }

@@ -19,6 +19,22 @@ The **Open in web** action is available for Nextcloud mounts. Files open in
 preview mode, and multiple selected items open in separate tabs. ownCloud
 mounts do not expose this Nextcloud-specific action.
 
+## Uploads
+
+Nextcloud writes use the recommended
+[WebDAV Chunked Upload v2 API](https://docs.nextcloud.com/server/35/developer_manual/client_apis/WebDAV/chunking.html#chunked-upload-v2). File writes
+are staged in the IndexedDB-backed open-file state so arbitrary write offsets
+can be combined, then uploaded in sequential 10 MiB chunks when the file is
+closed. The final chunk may be smaller; Nextcloud's 10,000-chunk limit is
+enforced. Empty files are sent with a direct PUT. A close request completes
+after the upload has been assembled on the server.
+
+ownCloud writes continue to use a direct WebDAV PUT. Nextcloud's
+[bulk-upload API](https://docs.nextcloud.com/server/35/developer_manual/client_apis/WebDAV/bulkupload.html)
+is not currently used because ChromeOS does not provide a batch boundary for
+multiple file closes; a future implementation needs an explicit batching and
+flush policy.
+
 ## Requirements
 
 - ChromeOS device or Chrome browser with Chrome 154 or newer

@@ -21,11 +21,17 @@ new Function('exports', 'require', 'module', compiled)(
   helperModule
 );
 const {
+  buildNextcloudFileDestination,
   buildNextcloudFilesUrl,
+  createNextcloudUploadFolder,
+  getNextcloudUploadChunkCount,
   getNextcloudFileMetadata,
   getOpenInWebActions,
+  NEXTCLOUD_MAX_UPLOAD_CHUNKS,
+  NEXTCLOUD_UPLOAD_CHUNK_SIZE,
   NEXTCLOUD_FILE_INFO_PROPFIND_BODY,
   OPEN_IN_WEB_ACTION,
+  uploadNextcloudFile,
 } = helperModule.exports;
 
 test('the Open in web action is returned for one or more Nextcloud entries', () => {
@@ -117,6 +123,108 @@ test('root directory URLs use the Nextcloud Files root', () => {
   ));
 
   assert.equal(url.searchParams.get('dir'), '/');
+});
+
+test('Nextcloud upload destinations are absolute and encode path segments', () => {
+  assert.equal(
+    buildNextcloudFileDestination(
+      'cloud.example.com',
+      'user@example.com',
+      '/Documents/report #1.pdf'
+    ),
+    'https://cloud.example.com/remote.php/dav/files/user%40example.com/Documents/report%20%231.pdf'
+  );
+});
+
+test('Nextcloud upload folder creation sends its final destination', async () => {
+  const requests = [];
+  const client = {
+    async customRequest(path, options) {
+      requests.push({ path, options });
+    },
+  };
+  const destination = 'https://cloud.example.com/remote.php/dav/files/user/file.txt';
+
+  await createNextcloudUploadFolder(client, '/uploads/user/upload-id', destination);
+
+  assert.deepEqual(requests, [{
+    path: '/uploads/user/upload-id',
+    options: {
+      method: 'MKCOL',
+      headers: { Destination: destination },
+    },
+  }]);
+});
+
+test('Nextcloud files upload as ordered numeric chunks with v2 headers', async () => {
+  const requests = [];
+  const client = {
+    async customRequest(path, options) {
+      requests.push({ path, options });
+    },
+  };
+  const fileSize = NEXTCLOUD_UPLOAD_CHUNK_SIZE * 2 + 3;
+  const destination = 'https://cloud.example.com/remote.php/dav/files/user/file.bin';
+
+  await uploadNextcloudFile(
+    client,
+    '/uploads/user/upload-id',
+    '/files/user/file.bin',
+    destination,
+    new ArrayBuffer(fileSize)
+  );
+
+  assert.deepEqual(requests.map(({ path, options }) => [
+    path,
+    options.method,
+    options.data?.byteLength,
+  ]), [
+    ['/uploads/user/upload-id/00001', 'PUT', NEXTCLOUD_UPLOAD_CHUNK_SIZE],
+    ['/uploads/user/upload-id/00002', 'PUT', NEXTCLOUD_UPLOAD_CHUNK_SIZE],
+    ['/uploads/user/upload-id/00003', 'PUT', 3],
+    ['/uploads/user/upload-id/.file', 'MOVE', undefined],
+  ]);
+  for (const { options } of requests) {
+    assert.equal(options.headers.Destination, destination);
+    assert.equal(options.headers['OC-Total-Length'], String(fileSize));
+  }
+});
+
+test('empty Nextcloud files use a direct PUT and remove the temporary folder', async () => {
+  const requests = [];
+  const client = {
+    async customRequest(path, options) {
+      requests.push({ path, options });
+    },
+  };
+
+  await uploadNextcloudFile(
+    client,
+    '/uploads/user/upload-id',
+    '/files/user/empty',
+    'https://cloud.example.com/remote.php/dav/files/user/empty',
+    new ArrayBuffer(0)
+  );
+
+  assert.deepEqual(requests.map(({ path, options }) => [path, options.method]), [
+    ['/files/user/empty', 'PUT'],
+    ['/uploads/user/upload-id/', 'DELETE'],
+  ]);
+  assert.equal(requests[0].options.data.byteLength, 0);
+});
+
+test('Nextcloud upload chunk-count limits are enforced before requests', () => {
+  assert.equal(
+    getNextcloudUploadChunkCount(NEXTCLOUD_UPLOAD_CHUNK_SIZE * NEXTCLOUD_MAX_UPLOAD_CHUNKS),
+    NEXTCLOUD_MAX_UPLOAD_CHUNKS
+  );
+  assert.throws(
+    () => getNextcloudUploadChunkCount(
+      NEXTCLOUD_UPLOAD_CHUNK_SIZE * NEXTCLOUD_MAX_UPLOAD_CHUNKS + 1
+    ),
+    /limited to 10000 chunks/
+  );
+  assert.throws(() => getNextcloudUploadChunkCount(-1), /non-negative safe integer/);
 });
 
 test('all locale catalogs define the Open in web action label', () => {
