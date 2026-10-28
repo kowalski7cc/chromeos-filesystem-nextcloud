@@ -66,8 +66,8 @@ import WebDAVFS from './webdav_fs';
     if (action === 'mount') {
       await mount(options)
     } else if (action === 'registerProxy') {
-      const { host } = options;
-      await proxy.register(host);
+      const { host, useHttps } = options;
+      await proxy.register(host, useHttps);
     }
   });
 

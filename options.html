@@ -16,30 +16,30 @@
           <th><label for="uploadChunkSize" data-i18n="uploadChunkSize"></label></th>
           <td>
             <div class="size-input">
-              <input id="uploadChunkSize" type="number" min="5" max="100" step="1" required>
+              <input id="uploadChunkSize" type="number" min="5" max="100" step="1" aria-describedby="uploadChunkSizeHint" required>
               <span>MiB</span>
             </div>
-            <small class="hint" data-i18n="uploadChunkSizeHint"></small>
+            <small id="uploadChunkSizeHint" class="hint" data-i18n="uploadChunkSizeHint"></small>
           </td>
         </tr>
         <tr>
           <th><label for="downloadReadAheadSize" data-i18n="downloadReadAheadSize"></label></th>
           <td>
             <div class="size-input">
-              <input id="downloadReadAheadSize" type="number" min="1" max="64" step="1" required>
+              <input id="downloadReadAheadSize" type="number" min="1" max="64" step="1" aria-describedby="downloadReadAheadSizeHint" required>
               <span>MiB</span>
             </div>
-            <small class="hint" data-i18n="downloadReadAheadSizeHint"></small>
+            <small id="downloadReadAheadSizeHint" class="hint" data-i18n="downloadReadAheadSizeHint"></small>
           </td>
         </tr>
         <tr>
           <th><label id="downloadCacheSizeLabel" for="downloadCacheSize"></label></th>
           <td>
             <div class="size-input">
-              <input id="downloadCacheSize" type="number" min="16" max="512" step="1" required>
+              <input id="downloadCacheSize" type="number" min="16" max="512" step="1" aria-describedby="downloadCacheSizeHint" required>
               <span>MiB</span>
             </div>
-            <small class="hint" data-i18n="downloadCacheSizeHint"></small>
+            <small id="downloadCacheSizeHint" class="hint" data-i18n="downloadCacheSizeHint"></small>
           </td>
         </tr>
         <tr>

@@ -120,6 +120,18 @@ test('file URLs open the preview in its containing directory', () => {
   assert.equal(url.searchParams.get('openfile'), 'true');
 });
 
+test('file URLs use HTTP when the mounted server does not use HTTPS', () => {
+  const url = new URL(buildNextcloudFilesUrl(
+    'cloud.example.com',
+    '/Documents/report.pdf',
+    false,
+    '2671618',
+    false
+  ));
+
+  assert.equal(url.origin, 'http://cloud.example.com');
+});
+
 test('directory URLs omit file preview parameters', () => {
   const url = new URL(buildNextcloudFilesUrl(
     'cloud.example.com',
@@ -153,6 +165,18 @@ test('Nextcloud upload destinations are absolute and encode path segments', () =
       '/Documents/report #1.pdf'
     ),
     'https://cloud.example.com/remote.php/dav/files/user%40example.com/Documents/report%20%231.pdf'
+  );
+});
+
+test('Nextcloud upload destinations use HTTP when the mounted server does not use HTTPS', () => {
+  assert.equal(
+    buildNextcloudFileDestination(
+      'cloud.example.com',
+      'user',
+      '/file.txt',
+      false
+    ),
+    'http://cloud.example.com/remote.php/dav/files/user/file.txt'
   );
 });
 
@@ -374,6 +398,9 @@ test('all locale catalogs define extension UI message labels', () => {
   const localeRoot = path.join(__dirname, '../_locales');
   const locales = fs.readdirSync(localeRoot);
   const requiredKeys = [
+    'useHttpsForConnection',
+    'httpConnectionWarning',
+    'invalidServerDomain',
     'settingsTitle',
     'settingsDescription',
     'uploadChunkSize',
@@ -414,6 +441,36 @@ test('all locale catalogs define extension UI message labels', () => {
         'utf8'
       ));
       assert.ok(messages[key]?.message, `Missing ${key} message for ${locale}`);
+    }
+  }
+
+  const windowHtml = fs.readFileSync(
+    path.join(__dirname, '../window.html'),
+    'utf8'
+  );
+  const windowMessageKeys = [...windowHtml.matchAll(/__MSG_([A-Za-z0-9_]+)__/g)]
+    .map(([, key]) => key);
+  windowMessageKeys.push(
+    'invalidServerDomain',
+    'connectionFailed',
+    'instanceNameUnavailable'
+  );
+  const englishMessages = JSON.parse(fs.readFileSync(
+    path.join(localeRoot, 'en', 'messages.json'),
+    'utf8'
+  ));
+
+  for (const locale of locales) {
+    const messages = JSON.parse(fs.readFileSync(
+      path.join(localeRoot, locale, 'messages.json'),
+      'utf8'
+    ));
+    for (const key of windowMessageKeys)
+      assert.ok(messages[key]?.message, `Missing ${key} message for ${locale}`);
+    if (locale !== 'en') {
+      for (const key of ['advancedSettings', 'useNameFromNextcloudInstance'])
+        assert.notEqual(messages[key].message, englishMessages[key].message,
+          `Untranslated ${key} message for ${locale}`);
     }
   }
 });

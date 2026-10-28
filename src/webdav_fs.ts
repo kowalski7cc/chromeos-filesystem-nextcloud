@@ -44,6 +44,7 @@ interface Credential {
   name: string
   domain: string
   server: ServerType
+  useHttps?: boolean
   username: string
   password: string
 }
@@ -55,6 +56,7 @@ interface MountedStorage {
 interface FileSystemProps {
   server: ServerType
   domain: string
+  useHttps: boolean
   username: string
   client: Client
   metadataCache: MetadataCache
@@ -134,7 +136,8 @@ export default class WebDAVFS {
         fileSystem.domain,
         entryPath,
         isDirectory,
-        fileId
+        fileId,
+        fileSystem.useHttps
       );
     }));
 
@@ -156,11 +159,13 @@ export default class WebDAVFS {
     console.log('WebDAVFS.mount')
 
     const { name, domain, username } = credential;
+    const useHttps = credential.useHttps ?? true;
+    const mountedCredential = { ...credential, useHttps };
     if (await this.isMounted(domain, username)) return;
 
-    await this.#proxy.register(domain);
+    await this.#proxy.register(domain, useHttps);
 
-    const props = this.#getFileSystemProps(credential);
+    const props = this.#getFileSystemProps(mountedCredential);
     const { client, filePathConverter } = props;
     // test connection and authentication
     await client.getDirectoryContents(filePathConverter('/'));
@@ -172,7 +177,7 @@ export default class WebDAVFS {
 
     this.#fileSystemMap[fileSystemId] = props;
 
-    await storeMountedCredential(fileSystemId, credential);
+    await storeMountedCredential(fileSystemId, mountedCredential);
   }
 
   async resumeMounts() {
@@ -197,7 +202,10 @@ export default class WebDAVFS {
 
     await removeMountedCredential(fileSystemId);
     await this.#proxy.reconcile(
-      (await getMountedCredentials()).map(credential => credential.domain)
+      (await getMountedCredentials()).map(credential => ({
+        host: credential.domain,
+        useHttps: credential.useHttps,
+      }))
     );
   }
 
@@ -249,7 +257,7 @@ export default class WebDAVFS {
     const buffer = new ArrayBuffer(0);
     const uuid = uuidv1();
     const {
-      server, domain, username, client, uploadPathConverter,
+      server, domain, useHttps, username, client, uploadPathConverter,
     } = this.#fileSystemMap[fileSystemId];
     const transferSettings = mode === 'READ' || (mode === 'WRITE' && server === 'nc')
       ? await loadTransferSettings()
@@ -257,7 +265,9 @@ export default class WebDAVFS {
 
     if (mode === 'WRITE' && server === 'nc') {
       const uploadPath = uploadPathConverter(`/${uuid}`);
-      const destination = buildNextcloudFileDestination(domain, username, filePath);
+      const destination = buildNextcloudFileDestination(
+        domain, username, filePath, useHttps
+      );
       await createNextcloudUploadFolder(client, uploadPath, destination);
     }
     if (mode === 'READ')
@@ -291,7 +301,7 @@ export default class WebDAVFS {
     const { filePath, mode, uuid, recoverable } = openedFile;
     console.log(`WebDAVFS.onCloseFileRequested: openRequestId=${openRequestId}, filePath='${filePath}', mode=${mode}`);
 
-    const { server, domain, username, client, filePathConverter, uploadPathConverter } =
+    const { server, domain, useHttps, username, client, filePathConverter, uploadPathConverter } =
       this.#fileSystemMap[fileSystemId];
 
     if (mode === 'WRITE') {
@@ -304,7 +314,9 @@ export default class WebDAVFS {
         if (!latestOpenedFile)
           throw new Error('Open file operation state is unavailable');
         const destinationPath = filePathConverter(filePath);
-        const destination = buildNextcloudFileDestination(domain, username, filePath);
+        const destination = buildNextcloudFileDestination(
+          domain, username, filePath, useHttps
+        );
         await uploadNextcloudFile(
           client,
           uploadPathConverter(`/${uuid}`),
@@ -492,7 +504,8 @@ export default class WebDAVFS {
         const destination = buildNextcloudFileDestination(
           domain,
           username,
-          record.filePath
+          record.filePath,
+          this.#fileSystemMap[fileSystemId].useHttps
         );
         const uploadStartedAt = performance.now();
         await uploadNextcloudChunk(
@@ -646,7 +659,10 @@ export default class WebDAVFS {
 
     const { fileSystems, mountedCredentials, mountedIds } = await this.#mountState;
 
-    await this.#proxy.reconcile(mountedCredentials.map(credential => credential.domain));
+    await this.#proxy.reconcile(mountedCredentials.map(credential => ({
+      host: credential.domain,
+      useHttps: credential.useHttps,
+    })));
 
     const storedFiles = new Map(
       (await getOpenedFiles()).map(openedFile => [openedFile.key, openedFile])
@@ -700,9 +716,9 @@ export default class WebDAVFS {
   };
 
   #getFileSystemProps = (credential: Credential) => {
-    const { domain, server, username, password } = credential;
+    const { domain, server, username, password, useHttps = true } = credential;
 
-    const url = `https://${domain}/remote.php/dav/`;
+    const url = `${useHttps ? 'https' : 'http'}://${domain}/remote.php/dav/`;
     const client = createClient(url, { username, password });
     const metadataCache = new MetadataCache();
     const filePathConverter: PathConverter =
@@ -711,7 +727,8 @@ export default class WebDAVFS {
       path => `/uploads/${username}${path}`;
 
     return {
-      server, domain, username, client, metadataCache, filePathConverter, uploadPathConverter,
+      server, domain, useHttps, username, client, metadataCache, filePathConverter,
+      uploadPathConverter,
     };
   };
 }
@@ -736,7 +753,10 @@ async function removeMountedCredential(fileSystemId: string) {
 async function getMountedCredentials(): Promise<Credential[]> {
   const { mountedCredentials } =
     await browser.storage.local.get<MountedStorage>();
-  return Object.values(mountedCredentials || {});
+  return Object.values(mountedCredentials || {}).map(credential => ({
+    ...credential,
+    useHttps: credential.useHttps ?? true,
+  }));
 }
 
 function createFileSystemID(domain: string, username: string) {

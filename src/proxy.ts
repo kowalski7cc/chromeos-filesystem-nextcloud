@@ -9,20 +9,40 @@ const OPTIONAL_HEADERS = new Set([
   'sec-fetch-dest',
 ]);
 
+interface ProxyHost {
+  host: string
+  useHttps?: boolean
+}
+
 export default class Proxy {
-  async register(host: string) {
+  async register(host: string, useHttps = true) {
     const rules = await this.#getRules();
-    const hosts = rules
+    const hosts: ProxyHost[] = rules
       .filter(rule => this.#isManagedRule(rule.id) && rule.id % 2 === 0)
-      .map(rule => new URL(rule.condition.urlFilter.slice(1)).host);
-    await this.reconcile([...hosts, host]);
+      .map(rule => {
+        const url = new URL(rule.condition.urlFilter.slice(1));
+        return { host: url.host, useHttps: url.protocol === 'https:' };
+      });
+    await this.reconcile([...hosts, { host, useHttps }]);
   }
 
-  async reconcile(hosts: string[]) {
-    const requestedHosts = Array.from(new Set(hosts.map(normalizeHost))).sort();
-    const normalizedHosts = (await Promise.all(requestedHosts.map(async host =>
-      await browser.permissions.contains({ origins: [`https://${host}/*`] }) ? host : undefined
-    ))).filter((host): host is string => host !== undefined);
+  async reconcile(hosts: Array<string | ProxyHost>) {
+    const requestedHosts = Array.from(new Map(hosts.map(normalizeHost).map(server => [
+      `${server.useHttps ? 'https' : 'http'}://${server.host}`,
+      server,
+    ])).values()).sort((left, right) => {
+      const leftOrigin = `${left.useHttps ? 'https' : 'http'}://${left.host}`;
+      const rightOrigin = `${right.useHttps ? 'https' : 'http'}://${right.host}`;
+      return leftOrigin.localeCompare(rightOrigin);
+    });
+    const normalizedHosts = (await Promise.all(requestedHosts.map(async server => {
+      const protocol = server.useHttps ? 'https' : 'http';
+      return await browser.permissions.contains({
+        origins: [`${protocol}://${server.host}/*`],
+      }) ? server : undefined;
+    }))).filter((server): server is ProxyHost & { useHttps: boolean } =>
+      server !== undefined
+    );
     if (normalizedHosts.length > MAX_PROXY_HOSTS)
       throw new Error('Too many WebDAV hosts are mounted');
 
@@ -30,10 +50,11 @@ export default class Proxy {
     const removeRuleIds = currentRules
       .filter(rule => this.#isManagedRule(rule.id))
       .map(rule => rule.id);
-    const addRules = normalizedHosts.flatMap((host, index) => {
+    const addRules = normalizedHosts.flatMap(({ host, useHttps }, index) => {
       const ruleId = RULE_ID_BASE + index * RULES_PER_HOST;
+      const protocol = useHttps ? 'https' : 'http';
       const condition = {
-        urlFilter: `|https://${host}/`,
+        urlFilter: `|${protocol}://${host}/`,
         initiatorDomains: [browser.runtime.id],
         resourceTypes: ['xmlhttprequest'],
       };
@@ -104,10 +125,15 @@ export default class Proxy {
   };
 }
 
-function normalizeHost(host: string) {
-  const url = new URL(host.includes('://') ? host : `https://${host}`);
-  if (url.protocol !== 'https:' || url.username || url.password ||
+function normalizeHost(input: string | ProxyHost) {
+  const useHttps = typeof input === 'string' || input.useHttps === undefined
+    ? true
+    : input.useHttps;
+  const protocol = useHttps ? 'https:' : 'http:';
+  const host = typeof input === 'string' ? input : input.host;
+  const url = new URL(host.includes('://') ? host : `${protocol}//${host}`);
+  if (url.protocol !== protocol || url.username || url.password ||
       url.pathname !== '/' || url.search || url.hash)
-    throw new Error('Enter a valid HTTPS server domain');
-  return url.host;
+    throw new Error('Enter a valid server address');
+  return { host: url.host, useHttps };
 }

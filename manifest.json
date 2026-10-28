@@ -14,7 +14,8 @@
     "declarativeNetRequestWithHostAccess"
   ],
   "optional_host_permissions": [
-    "https://*/"
+    "https://*/",
+    "http://*/"
   ],
   "background": {
     "service_worker": "dist/background.js"

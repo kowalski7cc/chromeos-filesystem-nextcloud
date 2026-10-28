@@ -45,11 +45,12 @@ export function buildNextcloudFilesUrl(
   domain: string,
   entryPath: string,
   isDirectory: boolean,
-  fileId: string
+  fileId: string,
+  useHttps = true
 ): string {
   const url = new URL(
     `/apps/files/files/${encodeURIComponent(fileId)}`,
-    `https://${domain}`
+    `${useHttps ? 'https' : 'http'}://${domain}`
   );
   const path = entryPath.endsWith('/') && entryPath !== '/'
     ? entryPath.slice(0, -1)
@@ -73,9 +74,10 @@ export function buildNextcloudFilesUrl(
 export function buildNextcloudFileDestination(
   domain: string,
   username: string,
-  filePath: string
+  filePath: string,
+  useHttps = true
 ): string {
-  const origin = new URL(`https://${domain}`).origin;
+  const origin = new URL(`${useHttps ? 'https' : 'http'}://${domain}`).origin;
   const encodedPath = filePath
     .split('/')
     .map(segment => encodeURIComponent(segment))

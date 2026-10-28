@@ -75,9 +75,33 @@
     "message": "Name",
     "description": "Label for the mount name field"
   },
+  "useNameFromNextcloudInstance": {
+    "message": "Use name from Nextcloud instance if available",
+    "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
+  },
   "serverDomain": {
     "message": "Server domain",
     "description": "Label for the server domain field"
+  },
+  "invalidServerDomain": {
+    "message": "Enter a valid server address, such as cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "Use HTTPS for connection",
+    "description": "Toggle HTTPS for the server connection."
+  },
+  "httpConnectionWarning": {
+    "message": "HTTP is not encrypted. Your credentials and file data may be visible to others on the network. Continue only on a trusted network."
+  },
+  "connectionFailed": {
+    "message": "Could not connect to the server. Check the address and try again."
+  },
+  "instanceNameUnavailable": {
+    "message": "Could not retrieve the instance name. Using Nextcloud instead."
+  },
+  "advancedSettings": {
+    "message": "Advanced settings",
+    "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {
     "message": "Use username and password (ownCloud)",
@@ -95,20 +119,52 @@
     "message": "Open in web",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
   },
-  "settingsTitle": { "message": "Transfer performance settings" },
-  "settingsDescription": { "message": "These global settings apply to all mounted servers. Changes affect newly opened files." },
-  "uploadChunkSize": { "message": "Upload chunk size" },
-  "uploadChunkSizeHint": { "message": "Nextcloud uploads use chunks of at least 5 MiB. Allowed: 5–100 MiB." },
-  "downloadReadAheadSize": { "message": "Download read-ahead size" },
-  "downloadReadAheadSizeHint": { "message": "Bytes fetched per read-ahead range. Allowed: 1–64 MiB." },
-  "downloadCacheLimitLabel": { "message": "Download cache limit" },
-  "downloadCacheSizeHint": { "message": "Maximum memory retained for cached ranges; must be at least one read-ahead range." },
-  "sequentialPrefetch": { "message": "Sequential download prefetch" },
-  "sequentialPrefetchHint": { "message": "Fetch the next range when reads are sequential." },
-  "resetSettings": { "message": "Restore defaults" },
-  "saveSettings": { "message": "Save settings" },
-  "settingsSaved": { "message": "Settings saved." },
-  "settingsReset": { "message": "Defaults restored." },
-  "settingsLoadError": { "message": "Could not load settings. Check the extension storage and reload this page." },
-  "settingsSaveError": { "message": "Could not save settings. Check the values and try again." }
+  "settingsTitle": {
+    "message": "Transfer performance settings"
+  },
+  "settingsDescription": {
+    "message": "These global settings apply to all mounted servers. Changes affect newly opened files."
+  },
+  "uploadChunkSize": {
+    "message": "Upload chunk size"
+  },
+  "uploadChunkSizeHint": {
+    "message": "Nextcloud uploads use chunks of at least 5 MiB. Allowed: 5–100 MiB."
+  },
+  "downloadReadAheadSize": {
+    "message": "Download read-ahead size"
+  },
+  "downloadReadAheadSizeHint": {
+    "message": "Bytes fetched per read-ahead range. Allowed: 1–64 MiB."
+  },
+  "downloadCacheLimitLabel": {
+    "message": "Download cache limit"
+  },
+  "downloadCacheSizeHint": {
+    "message": "Maximum memory retained for cached ranges; must be at least one read-ahead range."
+  },
+  "sequentialPrefetch": {
+    "message": "Sequential download prefetch"
+  },
+  "sequentialPrefetchHint": {
+    "message": "Fetch the next range when reads are sequential."
+  },
+  "resetSettings": {
+    "message": "Restore defaults"
+  },
+  "saveSettings": {
+    "message": "Save settings"
+  },
+  "settingsSaved": {
+    "message": "Settings saved."
+  },
+  "settingsReset": {
+    "message": "Defaults restored."
+  },
+  "settingsLoadError": {
+    "message": "Could not load settings. Check the extension storage and reload this page."
+  },
+  "settingsSaveError": {
+    "message": "Could not save settings. Check the values and try again."
+  }
 }

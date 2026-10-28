@@ -75,9 +75,32 @@
     "message": "Назва",
     "description": "Label for the mount name field"
   },
+  "useNameFromNextcloudInstance": {
+    "message": "Використовувати назву екземпляра Nextcloud, якщо доступна",
+    "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
+  },
   "serverDomain": {
     "message": "Домен сервера",
     "description": "Label for the server domain field"
+  },
+  "invalidServerDomain": {
+    "message": "Введіть дійсну адресу сервера, наприклад cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "Використовувати HTTPS для з'єднання"
+  },
+  "httpConnectionWarning": {
+    "message": "HTTP не шифрується. Ваші облікові дані та файли можуть бути видимі іншим користувачам мережі. Продовжуйте лише в довіреній мережі."
+  },
+  "connectionFailed": {
+    "message": "Не вдалося підключитися до сервера. Перевірте адресу й повторіть спробу."
+  },
+  "instanceNameUnavailable": {
+    "message": "Не вдалося отримати назву екземпляра. Буде використано Nextcloud."
+  },
+  "advancedSettings": {
+    "message": "Додаткові налаштування",
+    "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {
     "message": "Використовувати ім'я користувача та пароль (ownCloud)",
@@ -94,21 +117,53 @@
   "openInWeb": {
     "message": "Відкрити у вебі",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-    },
-    "settingsTitle": { "message": "Налаштування продуктивності передавання" },
-    "settingsDescription": { "message": "Ці глобальні налаштування діють для всіх підключених серверів. Зміни застосовуються до нових відкритих файлів." },
-    "uploadChunkSize": { "message": "Розмір частини завантаження" },
-    "uploadChunkSizeHint": { "message": "Nextcloud потребує частини розміром щонайменше 5 MiB. Дозволено: 5–100 MiB." },
-    "downloadReadAheadSize": { "message": "Розмір попереднього читання" },
-    "downloadReadAheadSizeHint": { "message": "Кількість байтів у кожному діапазоні попереднього читання. Дозволено: 1–64 MiB." },
-    "downloadCacheLimitLabel": { "message": "Обмеження кешу завантажень" },
-    "downloadCacheSizeHint": { "message": "Максимальна пам’ять для кешованих діапазонів; має бути не меншою за один діапазон попереднього читання." },
-    "sequentialPrefetch": { "message": "Послідовне попереднє завантаження" },
-    "sequentialPrefetchHint": { "message": "Завантажувати наступний діапазон під час послідовного читання." },
-    "resetSettings": { "message": "Відновити типові значення" },
-    "saveSettings": { "message": "Зберегти налаштування" },
-    "settingsSaved": { "message": "Налаштування збережено." },
-    "settingsReset": { "message": "Типові значення відновлено." },
-    "settingsLoadError": { "message": "Не вдалося завантажити налаштування. Перевірте сховище розширення та перезавантажте сторінку." },
-    "settingsSaveError": { "message": "Не вдалося зберегти налаштування. Перевірте значення та спробуйте ще раз." }
+  },
+  "settingsTitle": {
+    "message": "Налаштування продуктивності передавання"
+  },
+  "settingsDescription": {
+    "message": "Ці глобальні налаштування діють для всіх підключених серверів. Зміни застосовуються до нових відкритих файлів."
+  },
+  "uploadChunkSize": {
+    "message": "Розмір частини завантаження"
+  },
+  "uploadChunkSizeHint": {
+    "message": "Nextcloud потребує частини розміром щонайменше 5 MiB. Дозволено: 5–100 MiB."
+  },
+  "downloadReadAheadSize": {
+    "message": "Розмір попереднього читання"
+  },
+  "downloadReadAheadSizeHint": {
+    "message": "Кількість байтів у кожному діапазоні попереднього читання. Дозволено: 1–64 MiB."
+  },
+  "downloadCacheLimitLabel": {
+    "message": "Обмеження кешу завантажень"
+  },
+  "downloadCacheSizeHint": {
+    "message": "Максимальна пам’ять для кешованих діапазонів; має бути не меншою за один діапазон попереднього читання."
+  },
+  "sequentialPrefetch": {
+    "message": "Послідовне попереднє завантаження"
+  },
+  "sequentialPrefetchHint": {
+    "message": "Завантажувати наступний діапазон під час послідовного читання."
+  },
+  "resetSettings": {
+    "message": "Відновити типові значення"
+  },
+  "saveSettings": {
+    "message": "Зберегти налаштування"
+  },
+  "settingsSaved": {
+    "message": "Налаштування збережено."
+  },
+  "settingsReset": {
+    "message": "Типові значення відновлено."
+  },
+  "settingsLoadError": {
+    "message": "Не вдалося завантажити налаштування. Перевірте сховище розширення та перезавантажте сторінку."
+  },
+  "settingsSaveError": {
+    "message": "Не вдалося зберегти налаштування. Перевірте значення та спробуйте ще раз."
+  }
 }

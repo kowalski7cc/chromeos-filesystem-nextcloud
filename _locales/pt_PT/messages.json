@@ -1,42 +1,145 @@
 {
-  "appName": { "message": "Serviço de armazenamento ChromeOS para Nextcloud" },
-  "appDescription": { "message": "Serviço não oficial de armazenamento Nextcloud/ownCloud para Chrome OS" },
-  "shortName": { "message": "Nextcloud" },
-  "mountHeader": { "message": "Montar um novo servidor WebDAV" },
-  "mount": { "message": "Montar" },
-  "keep": { "message": "Manter" },
-  "mountAttempt": { "message": "A tentar montar a instância..." },
-  "mountSuccess": { "message": "Montado com êxito." },
-  "mountFail": { "message": "Não foi possível montar." },
-  "url": { "message": "URL" },
-  "authTypeNone": { "message": "Nenhuma" },
-  "authTypeBasic": { "message": "Básica" },
-  "authTypeDigest": { "message": "Digest" },
-  "username": { "message": "Nome de utilizador" },
-  "password": { "message": "Palavra-passe" },
-  "keepPasswordYes": { "message": "Sim" },
-  "keepPasswordNo": { "message": "Não" },
-  "loginTitle": { "message": "Iniciar sessão no Nextcloud" },
-  "nameLabel": { "message": "Nome" },
-  "serverDomain": { "message": "Domínio do servidor" },
-  "useUsernamePassword": { "message": "Utilizar nome de utilizador e palavra-passe (ownCloud)" },
-  "login": { "message": "Iniciar sessão" },
-  "mounting": { "message": "A montar..." },
-  "openInWeb": { "message": "Abrir na Web" },
-  "settingsTitle": { "message": "Definições de desempenho da transferência" },
-  "settingsDescription": { "message": "Estas definições globais aplicam-se a todos os servidores montados. As alterações afetam os ficheiros abertos posteriormente." },
-  "uploadChunkSize": { "message": "Tamanho do bloco de carregamento" },
-  "uploadChunkSizeHint": { "message": "Os carregamentos do Nextcloud utilizam blocos de, pelo menos, 5 MiB. Permitido: 5–100 MiB." },
-  "downloadReadAheadSize": { "message": "Tamanho da leitura antecipada da transferência" },
-  "downloadReadAheadSizeHint": { "message": "Bytes obtidos por intervalo de leitura antecipada. Permitido: 1–64 MiB." },
-  "downloadCacheLimitLabel": { "message": "Limite da cache de transferências" },
-  "downloadCacheSizeHint": { "message": "Memória máxima mantida para intervalos em cache; tem de ser, pelo menos, igual a um intervalo de leitura antecipada." },
-  "sequentialPrefetch": { "message": "Pré-carregamento sequencial de transferências" },
-  "sequentialPrefetchHint": { "message": "Obtém o intervalo seguinte quando as leituras são sequenciais." },
-  "resetSettings": { "message": "Repor predefinições" },
-  "saveSettings": { "message": "Guardar definições" },
-  "settingsSaved": { "message": "Definições guardadas." },
-  "settingsReset": { "message": "Predefinições repostas." },
-  "settingsLoadError": { "message": "Não foi possível carregar as definições. Verifique o armazenamento da extensão e volte a carregar esta página." },
-  "settingsSaveError": { "message": "Não foi possível guardar as definições. Verifique os valores e tente novamente." }
+  "appName": {
+    "message": "Serviço de armazenamento ChromeOS para Nextcloud"
+  },
+  "appDescription": {
+    "message": "Serviço não oficial de armazenamento Nextcloud/ownCloud para Chrome OS"
+  },
+  "shortName": {
+    "message": "Nextcloud"
+  },
+  "mountHeader": {
+    "message": "Montar um novo servidor WebDAV"
+  },
+  "mount": {
+    "message": "Montar"
+  },
+  "keep": {
+    "message": "Manter"
+  },
+  "mountAttempt": {
+    "message": "A tentar montar a instância..."
+  },
+  "mountSuccess": {
+    "message": "Montado com êxito."
+  },
+  "mountFail": {
+    "message": "Não foi possível montar."
+  },
+  "url": {
+    "message": "URL"
+  },
+  "authTypeNone": {
+    "message": "Nenhuma"
+  },
+  "authTypeBasic": {
+    "message": "Básica"
+  },
+  "authTypeDigest": {
+    "message": "Digest"
+  },
+  "username": {
+    "message": "Nome de utilizador"
+  },
+  "password": {
+    "message": "Palavra-passe"
+  },
+  "keepPasswordYes": {
+    "message": "Sim"
+  },
+  "keepPasswordNo": {
+    "message": "Não"
+  },
+  "loginTitle": {
+    "message": "Iniciar sessão no Nextcloud"
+  },
+  "nameLabel": {
+    "message": "Nome"
+  },
+  "useNameFromNextcloudInstance": {
+    "message": "Utilizar o nome da instância do Nextcloud, se disponível",
+    "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
+  },
+  "serverDomain": {
+    "message": "Domínio do servidor"
+  },
+  "invalidServerDomain": {
+    "message": "Introduza um endereço de servidor válido, como cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "Utilizar HTTPS para a ligação"
+  },
+  "httpConnectionWarning": {
+    "message": "O HTTP não é encriptado. As suas credenciais e ficheiros podem ficar visíveis para outras pessoas na rede. Continue apenas numa rede fidedigna."
+  },
+  "connectionFailed": {
+    "message": "Não foi possível ligar ao servidor. Verifique o endereço e tente novamente."
+  },
+  "instanceNameUnavailable": {
+    "message": "Não foi possível obter o nome da instância. Será utilizado o Nextcloud."
+  },
+  "advancedSettings": {
+    "message": "Definições avançadas",
+    "description": "Summary label for the advanced settings expander."
+  },
+  "useUsernamePassword": {
+    "message": "Utilizar nome de utilizador e palavra-passe (ownCloud)"
+  },
+  "login": {
+    "message": "Iniciar sessão"
+  },
+  "mounting": {
+    "message": "A montar..."
+  },
+  "openInWeb": {
+    "message": "Abrir na Web"
+  },
+  "settingsTitle": {
+    "message": "Definições de desempenho da transferência"
+  },
+  "settingsDescription": {
+    "message": "Estas definições globais aplicam-se a todos os servidores montados. As alterações afetam os ficheiros abertos posteriormente."
+  },
+  "uploadChunkSize": {
+    "message": "Tamanho do bloco de carregamento"
+  },
+  "uploadChunkSizeHint": {
+    "message": "Os carregamentos do Nextcloud utilizam blocos de, pelo menos, 5 MiB. Permitido: 5–100 MiB."
+  },
+  "downloadReadAheadSize": {
+    "message": "Tamanho da leitura antecipada da transferência"
+  },
+  "downloadReadAheadSizeHint": {
+    "message": "Bytes obtidos por intervalo de leitura antecipada. Permitido: 1–64 MiB."
+  },
+  "downloadCacheLimitLabel": {
+    "message": "Limite da cache de transferências"
+  },
+  "downloadCacheSizeHint": {
+    "message": "Memória máxima mantida para intervalos em cache; tem de ser, pelo menos, igual a um intervalo de leitura antecipada."
+  },
+  "sequentialPrefetch": {
+    "message": "Pré-carregamento sequencial de transferências"
+  },
+  "sequentialPrefetchHint": {
+    "message": "Obtém o intervalo seguinte quando as leituras são sequenciais."
+  },
+  "resetSettings": {
+    "message": "Repor predefinições"
+  },
+  "saveSettings": {
+    "message": "Guardar definições"
+  },
+  "settingsSaved": {
+    "message": "Definições guardadas."
+  },
+  "settingsReset": {
+    "message": "Predefinições repostas."
+  },
+  "settingsLoadError": {
+    "message": "Não foi possível carregar as definições. Verifique o armazenamento da extensão e volte a carregar esta página."
+  },
+  "settingsSaveError": {
+    "message": "Não foi possível guardar as definições. Verifique os valores e tente novamente."
+  }
 }

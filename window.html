@@ -13,18 +13,10 @@
     <tbody>
       <tr>
         <th>
-          <label for="name">__MSG_nameLabel__</label>
-        </th>
-        <td>
-          <input id="name" type="text" value="Nextcloud">
-        </td>
-      </tr>
-      <tr>
-        <th>
           <label for="domain">__MSG_serverDomain__</label>
         </th>
         <td>
-          <input id="domain" type="text" placeholder="cloud.example.com">
+          <input id="domain" type="text" placeholder="cloud.example.com" required>
         </td>
       </tr>
     </tbody>
@@ -52,8 +44,43 @@
     </table>
   </details>
 
+  <details id="advancedSettings">
+    <summary>__MSG_advancedSettings__</summary>
+
+    <label class="advanced-toggle-row" for="useInstanceName">
+      <span class="advanced-toggle-label">__MSG_useNameFromNextcloudInstance__</span>
+      <span class="switch">
+        <input id="useInstanceName" type="checkbox" role="switch" checked>
+        <span class="slider" aria-hidden="true"></span>
+      </span>
+    </label>
+
+    <div id="nameOverrideRow">
+      <table>
+        <tbody>
+          <tr>
+            <th>
+              <label for="name">__MSG_nameLabel__</label>
+            </th>
+            <td>
+              <input id="name" type="text" value="Nextcloud">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <label class="advanced-toggle-row" for="useHttps">
+      <span id="useHttpsLabel" class="advanced-toggle-label">__MSG_useHttpsForConnection__</span>
+      <span class="switch">
+        <input id="useHttps" type="checkbox" role="switch" checked>
+        <span class="slider" aria-hidden="true"></span>
+      </span>
+    </label>
+  </details>
+
   <div class="row">
-    <span id="message"></span>
+    <span id="message" role="status" aria-live="polite" aria-atomic="true"></span>
     <button id="btnOk">__MSG_login__</button>
   </div>
 

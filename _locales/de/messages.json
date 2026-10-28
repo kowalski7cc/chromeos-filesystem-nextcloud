@@ -75,9 +75,32 @@
     "message": "Name",
     "description": "Label for the mount name field"
   },
+  "useNameFromNextcloudInstance": {
+    "message": "Namen der Nextcloud-Instanz verwenden, falls verfügbar",
+    "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
+  },
   "serverDomain": {
     "message": "Serverdomäne",
     "description": "Label for the server domain field"
+  },
+  "invalidServerDomain": {
+    "message": "Geben Sie eine gültige Serveradresse ein, z. B. cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "HTTPS für die Verbindung verwenden"
+  },
+  "httpConnectionWarning": {
+    "message": "HTTP ist unverschlüsselt. Ihre Zugangsdaten und Dateien können für andere im Netzwerk sichtbar sein. Fahren Sie nur in einem vertrauenswürdigen Netzwerk fort."
+  },
+  "connectionFailed": {
+    "message": "Verbindung zum Server nicht möglich. Prüfen Sie die Adresse und versuchen Sie es erneut."
+  },
+  "instanceNameUnavailable": {
+    "message": "Der Instanzname konnte nicht abgerufen werden. Nextcloud wird verwendet."
+  },
+  "advancedSettings": {
+    "message": "Erweiterte Einstellungen",
+    "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {
     "message": "Benutzername und Passwort verwenden (ownCloud)",
@@ -94,21 +117,53 @@
   "openInWeb": {
     "message": "Im Web öffnen",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-    },
-    "settingsTitle": { "message": "Einstellungen für die Übertragungsleistung" },
-    "settingsDescription": { "message": "Diese globalen Einstellungen gelten für alle eingebundenen Server. Änderungen gelten für neu geöffnete Dateien." },
-    "uploadChunkSize": { "message": "Größe der Upload-Abschnitte" },
-    "uploadChunkSizeHint": { "message": "Nextcloud erfordert Abschnitte von mindestens 5 MiB. Zulässig: 5–100 MiB." },
-    "downloadReadAheadSize": { "message": "Vorladegröße für Downloads" },
-    "downloadReadAheadSizeHint": { "message": "Pro Vorladebereich gelesene Bytes. Zulässig: 1–64 MiB." },
-    "downloadCacheLimitLabel": { "message": "Download-Cache-Limit" },
-    "downloadCacheSizeHint": { "message": "Maximaler Speicher für zwischengespeicherte Bereiche; mindestens so groß wie ein Vorladebereich." },
-    "sequentialPrefetch": { "message": "Sequenzielles Vorladen" },
-    "sequentialPrefetchHint": { "message": "Beim sequenziellen Lesen den nächsten Bereich laden." },
-    "resetSettings": { "message": "Standards wiederherstellen" },
-    "saveSettings": { "message": "Einstellungen speichern" },
-    "settingsSaved": { "message": "Einstellungen gespeichert." },
-    "settingsReset": { "message": "Standardeinstellungen wiederhergestellt." },
-    "settingsLoadError": { "message": "Einstellungen konnten nicht geladen werden. Prüfen Sie den Erweiterungsspeicher und laden Sie die Seite neu." },
-    "settingsSaveError": { "message": "Einstellungen konnten nicht gespeichert werden. Prüfen Sie die Werte und versuchen Sie es erneut." }
+  },
+  "settingsTitle": {
+    "message": "Einstellungen für die Übertragungsleistung"
+  },
+  "settingsDescription": {
+    "message": "Diese globalen Einstellungen gelten für alle eingebundenen Server. Änderungen gelten für neu geöffnete Dateien."
+  },
+  "uploadChunkSize": {
+    "message": "Größe der Upload-Abschnitte"
+  },
+  "uploadChunkSizeHint": {
+    "message": "Nextcloud erfordert Abschnitte von mindestens 5 MiB. Zulässig: 5–100 MiB."
+  },
+  "downloadReadAheadSize": {
+    "message": "Vorladegröße für Downloads"
+  },
+  "downloadReadAheadSizeHint": {
+    "message": "Pro Vorladebereich gelesene Bytes. Zulässig: 1–64 MiB."
+  },
+  "downloadCacheLimitLabel": {
+    "message": "Download-Cache-Limit"
+  },
+  "downloadCacheSizeHint": {
+    "message": "Maximaler Speicher für zwischengespeicherte Bereiche; mindestens so groß wie ein Vorladebereich."
+  },
+  "sequentialPrefetch": {
+    "message": "Sequenzielles Vorladen"
+  },
+  "sequentialPrefetchHint": {
+    "message": "Beim sequenziellen Lesen den nächsten Bereich laden."
+  },
+  "resetSettings": {
+    "message": "Standards wiederherstellen"
+  },
+  "saveSettings": {
+    "message": "Einstellungen speichern"
+  },
+  "settingsSaved": {
+    "message": "Einstellungen gespeichert."
+  },
+  "settingsReset": {
+    "message": "Standardeinstellungen wiederhergestellt."
+  },
+  "settingsLoadError": {
+    "message": "Einstellungen konnten nicht geladen werden. Prüfen Sie den Erweiterungsspeicher und laden Sie die Seite neu."
+  },
+  "settingsSaveError": {
+    "message": "Einstellungen konnten nicht gespeichert werden. Prüfen Sie die Werte und versuchen Sie es erneut."
+  }
 }

@@ -75,9 +75,32 @@
     "message": "Nome",
     "description": "Label for the mount name field"
   },
+  "useNameFromNextcloudInstance": {
+    "message": "Usa il nome dell’istanza Nextcloud, se disponibile",
+    "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
+  },
   "serverDomain": {
     "message": "Dominio del server",
     "description": "Label for the server domain field"
+  },
+  "invalidServerDomain": {
+    "message": "Inserisci un indirizzo server valido, ad esempio cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "Usa HTTPS per la connessione"
+  },
+  "httpConnectionWarning": {
+    "message": "HTTP non è crittografato. Le credenziali e i file potrebbero essere visibili ad altri utenti della rete. Continua solo su una rete attendibile."
+  },
+  "connectionFailed": {
+    "message": "Impossibile connettersi al server. Controlla l’indirizzo e riprova."
+  },
+  "instanceNameUnavailable": {
+    "message": "Impossibile recuperare il nome dell’istanza. Verrà usato Nextcloud."
+  },
+  "advancedSettings": {
+    "message": "Impostazioni avanzate",
+    "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {
     "message": "Usa nome utente e password (ownCloud)",
@@ -94,21 +117,53 @@
   "openInWeb": {
     "message": "Apri sul web",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-    },
-    "settingsTitle": { "message": "Impostazioni prestazioni trasferimento" },
-    "settingsDescription": { "message": "Queste impostazioni globali si applicano a tutti i server montati. Le modifiche valgono per i file aperti successivamente." },
-    "uploadChunkSize": { "message": "Dimensione dei blocchi di caricamento" },
-    "uploadChunkSizeHint": { "message": "Nextcloud richiede blocchi di almeno 5 MiB. Intervallo consentito: 5–100 MiB." },
-    "downloadReadAheadSize": { "message": "Dimensione di lettura anticipata" },
-    "downloadReadAheadSizeHint": { "message": "Byte richiesti per ogni intervallo di lettura anticipata. Intervallo: 1–64 MiB." },
-    "downloadCacheLimitLabel": { "message": "Limite cache download" },
-    "downloadCacheSizeHint": { "message": "Memoria massima per gli intervalli memorizzati; deve contenere almeno un intervallo di lettura anticipata." },
-    "sequentialPrefetch": { "message": "Precaricamento sequenziale download" },
-    "sequentialPrefetchHint": { "message": "Richiedi l'intervallo successivo durante le letture sequenziali." },
-    "resetSettings": { "message": "Ripristina valori predefiniti" },
-    "saveSettings": { "message": "Salva impostazioni" },
-    "settingsSaved": { "message": "Impostazioni salvate." },
-    "settingsReset": { "message": "Valori predefiniti ripristinati." },
-    "settingsLoadError": { "message": "Impossibile caricare le impostazioni. Controlla l'archiviazione dell'estensione e ricarica la pagina." },
-    "settingsSaveError": { "message": "Impossibile salvare le impostazioni. Controlla i valori e riprova." }
+  },
+  "settingsTitle": {
+    "message": "Impostazioni prestazioni trasferimento"
+  },
+  "settingsDescription": {
+    "message": "Queste impostazioni globali si applicano a tutti i server montati. Le modifiche valgono per i file aperti successivamente."
+  },
+  "uploadChunkSize": {
+    "message": "Dimensione dei blocchi di caricamento"
+  },
+  "uploadChunkSizeHint": {
+    "message": "Nextcloud richiede blocchi di almeno 5 MiB. Intervallo consentito: 5–100 MiB."
+  },
+  "downloadReadAheadSize": {
+    "message": "Dimensione di lettura anticipata"
+  },
+  "downloadReadAheadSizeHint": {
+    "message": "Byte richiesti per ogni intervallo di lettura anticipata. Intervallo: 1–64 MiB."
+  },
+  "downloadCacheLimitLabel": {
+    "message": "Limite cache download"
+  },
+  "downloadCacheSizeHint": {
+    "message": "Memoria massima per gli intervalli memorizzati; deve contenere almeno un intervallo di lettura anticipata."
+  },
+  "sequentialPrefetch": {
+    "message": "Precaricamento sequenziale download"
+  },
+  "sequentialPrefetchHint": {
+    "message": "Richiedi l'intervallo successivo durante le letture sequenziali."
+  },
+  "resetSettings": {
+    "message": "Ripristina valori predefiniti"
+  },
+  "saveSettings": {
+    "message": "Salva impostazioni"
+  },
+  "settingsSaved": {
+    "message": "Impostazioni salvate."
+  },
+  "settingsReset": {
+    "message": "Valori predefiniti ripristinati."
+  },
+  "settingsLoadError": {
+    "message": "Impossibile caricare le impostazioni. Controlla l'archiviazione dell'estensione e ricarica la pagina."
+  },
+  "settingsSaveError": {
+    "message": "Impossibile salvare le impostazioni. Controlla i valori e riprova."
+  }
 }

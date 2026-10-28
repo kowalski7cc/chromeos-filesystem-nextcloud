@@ -26,7 +26,13 @@ function createProxy(dynamicRules = [], rejectOptionalHeaders = false, hostAcces
   };
   const browser = {
     runtime: { id: 'extension-test-id' },
-    permissions: { async contains() { return hostAccessGranted; } },
+    permissions: {
+      checkedOrigins: [],
+      async contains({ origins }) {
+        this.checkedOrigins.push(origins[0]);
+        return hostAccessGranted;
+      },
+    },
   };
   const chrome = { declarativeNetRequest: api };
   const proxySource = fs.readFileSync(path.join(__dirname, '../src/proxy.ts'), 'utf8');
@@ -45,7 +51,7 @@ function createProxy(dynamicRules = [], rejectOptionalHeaders = false, hostAcces
     chrome,
     URL
   );
-  return { proxy: new proxyModule.exports.default(), api };
+  return { proxy: new proxyModule.exports.default(), api, browser };
 }
 
 test('manifest declares a Chrome 154 MV3 service worker and public permissions', () => {
@@ -60,6 +66,7 @@ test('manifest declares a Chrome 154 MV3 service worker and public permissions',
   assert.ok(manifest.permissions.includes('declarativeNetRequestWithHostAccess'));
   assert.ok(!manifest.permissions.includes('webRequestBlocking'));
   assert.ok(manifest.optional_host_permissions.includes('https://*/'));
+  assert.ok(manifest.optional_host_permissions.includes('http://*/'));
   assert.equal(manifest.file_system_provider_capabilities.source, 'network');
 });
 
@@ -163,6 +170,14 @@ test('proxy registration creates extension-origin-scoped WebDAV header rules', a
   ]);
 });
 
+test('proxy registration creates HTTP rules and requests HTTP host access', async () => {
+  const { proxy, api, browser } = createProxy();
+  await proxy.register('cloud.example.com', false);
+
+  assert.equal(api.rules[0].condition.urlFilter, '|http://cloud.example.com/');
+  assert.ok(browser.permissions.checkedOrigins.includes('http://cloud.example.com/*'));
+});
+
 test('proxy reconciliation removes only its own rules', async () => {
   const { proxy, api } = createProxy([
     { id: 100000, condition: { urlFilter: '|https://old.example.com/' } },
@@ -178,7 +193,7 @@ test('proxy reconciliation removes only its own rules', async () => {
 
 test('proxy rejects non-origin server input', async () => {
   const { proxy, api } = createProxy();
-  await assert.rejects(proxy.reconcile(['cloud.example.com/path']), /valid HTTPS server domain/);
+  await assert.rejects(proxy.reconcile(['cloud.example.com/path']), /valid server address/);
   assert.equal(api.updates.length, 0);
 });
 
