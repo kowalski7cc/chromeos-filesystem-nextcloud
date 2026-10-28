@@ -4,6 +4,25 @@ const path = require('node:path');
 const test = require('node:test');
 const typescript = require('typescript');
 
+const settingsSource = fs.readFileSync(
+  path.join(__dirname, '../src/transfer_settings.ts'),
+  'utf8'
+);
+const settingsCompiled = typescript.transpileModule(settingsSource, {
+  compilerOptions: {
+    module: typescript.ModuleKind.CommonJS,
+    target: typescript.ScriptTarget.ES2020,
+  },
+}).outputText;
+const settingsModule = { exports: {} };
+new Function('exports', 'require', 'module', settingsCompiled)(
+  settingsModule.exports,
+  require,
+  settingsModule
+);
+const testRequire = id => id === './transfer_settings'
+  ? settingsModule.exports
+  : require(id);
 const source = fs.readFileSync(
   path.join(__dirname, '../src/nextcloud_files.ts'),
   'utf8'
@@ -17,7 +36,7 @@ const compiled = typescript.transpileModule(source, {
 const helperModule = { exports: {} };
 new Function('exports', 'require', 'module', compiled)(
   helperModule.exports,
-  require,
+  testRequire,
   helperModule
 );
 const {
@@ -261,6 +280,37 @@ test('Nextcloud close upload skips chunks already sent during writes', async () 
   ]);
 });
 
+test('Nextcloud uploads use the configured chunk size', async () => {
+  const requests = [];
+  const client = {
+    async customRequest(path, options) {
+      requests.push({ path, options });
+    },
+  };
+  const chunkSize = 5 * 1024 * 1024;
+  const fileSize = chunkSize + 2;
+
+  await uploadNextcloudFile(
+    client,
+    '/uploads/user/upload-id',
+    '/files/user/file.bin',
+    'https://cloud.example.com/remote.php/dav/files/user/file.bin',
+    fileSize,
+    async (_offset, length) => new ArrayBuffer(length),
+    { chunkSize }
+  );
+
+  assert.deepEqual(requests.map(({ path, options }) => [
+    path,
+    options.method,
+    options.data?.byteLength,
+  ]), [
+    ['/uploads/user/upload-id/00001', 'PUT', chunkSize],
+    ['/uploads/user/upload-id/00002', 'PUT', 2],
+    ['/uploads/user/upload-id/.file', 'MOVE', undefined],
+  ]);
+});
+
 test('Nextcloud close upload rejects an invalid first chunk index', async () => {
   const client = {
     async customRequest() {
@@ -320,9 +370,27 @@ test('Nextcloud upload chunk-count limits are enforced before requests', () => {
   assert.throws(() => getNextcloudUploadChunkCount(-1), /non-negative safe integer/);
 });
 
-test('all locale catalogs define the Open in web action label', () => {
+test('all locale catalogs define extension UI message labels', () => {
   const localeRoot = path.join(__dirname, '../_locales');
   const locales = fs.readdirSync(localeRoot);
+  const requiredKeys = [
+    'settingsTitle',
+    'settingsDescription',
+    'uploadChunkSize',
+    'uploadChunkSizeHint',
+    'downloadReadAheadSize',
+    'downloadReadAheadSizeHint',
+    'downloadCacheLimitLabel',
+    'downloadCacheSizeHint',
+    'sequentialPrefetch',
+    'sequentialPrefetchHint',
+    'resetSettings',
+    'saveSettings',
+    'settingsSaved',
+    'settingsReset',
+    'settingsLoadError',
+    'settingsSaveError',
+  ];
 
   for (const locale of locales) {
     const messages = JSON.parse(fs.readFileSync(
@@ -330,5 +398,22 @@ test('all locale catalogs define the Open in web action label', () => {
       'utf8'
     ));
     assert.ok(messages.openInWeb.message, `Missing openInWeb message for ${locale}`);
+    for (const key of requiredKeys)
+      assert.ok(messages[key]?.message, `Missing ${key} message for ${locale}`);
+  }
+
+  const optionsHtml = fs.readFileSync(
+    path.join(__dirname, '../options.html'),
+    'utf8'
+  );
+  assert.doesNotMatch(optionsHtml, /__MSG_[A-Za-z0-9_]+__/);
+  for (const [, key] of optionsHtml.matchAll(/data-i18n="([^"]+)"/g)) {
+    for (const locale of locales) {
+      const messages = JSON.parse(fs.readFileSync(
+        path.join(localeRoot, locale, 'messages.json'),
+        'utf8'
+      ));
+      assert.ok(messages[key]?.message, `Missing ${key} message for ${locale}`);
+    }
   }
 });

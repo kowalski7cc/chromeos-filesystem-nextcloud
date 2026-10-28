@@ -4,6 +4,25 @@ const path = require('node:path');
 const test = require('node:test');
 const typescript = require('typescript');
 
+const settingsSource = fs.readFileSync(
+  path.join(__dirname, '../src/transfer_settings.ts'),
+  'utf8'
+);
+const settingsCompiled = typescript.transpileModule(settingsSource, {
+  compilerOptions: {
+    module: typescript.ModuleKind.CommonJS,
+    target: typescript.ScriptTarget.ES2020,
+  },
+}).outputText;
+const settingsModule = { exports: {} };
+new Function('exports', 'require', 'module', settingsCompiled)(
+  settingsModule.exports,
+  require,
+  settingsModule
+);
+const testRequire = id => id === './transfer_settings'
+  ? settingsModule.exports
+  : require(id);
 const source = fs.readFileSync(
   path.join(__dirname, '../src/webdav_read_cache.ts'),
   'utf8'
@@ -17,7 +36,7 @@ const compiled = typescript.transpileModule(source, {
 const helperModule = { exports: {} };
 new Function('exports', 'require', 'module', compiled)(
   helperModule.exports,
-  require,
+  testRequire,
   helperModule
 );
 const {
@@ -63,6 +82,36 @@ test('sequential small reads share prefetched range data', async () => {
     networkTimeMs: cache.metrics.networkTimeMs,
   });
   assert.ok(cache.metrics.networkTimeMs >= 0);
+  cache.clear();
+});
+
+test('download range size and sequential prefetch are configurable', async () => {
+  const rangeSize = 4 * 1024 * 1024;
+  const cache = new WebDAVReadCache({
+    downloadReadAheadSize: rangeSize,
+    downloadCacheSize: 16 * 1024 * 1024,
+    sequentialPrefetch: false,
+    uploadChunkSize: 10 * 1024 * 1024,
+  });
+  const requests = [];
+  const fetchRange = async (offset, length) => {
+    requests.push({ offset, length });
+    return new Uint8Array(length).buffer;
+  };
+
+  for (let index = 0; index < 5; index++)
+    await cache.read(index * rangeSize, 4, fetchRange);
+  await cache.read(0, 4, fetchRange);
+
+  assert.deepEqual(requests, [
+    { offset: 0, length: rangeSize },
+    { offset: rangeSize, length: rangeSize },
+    { offset: rangeSize * 2, length: rangeSize },
+    { offset: rangeSize * 3, length: rangeSize },
+    { offset: rangeSize * 4, length: rangeSize },
+    { offset: 0, length: rangeSize },
+  ]);
+  assert.equal(cache.metrics.prefetchRequests, 0);
   cache.clear();
 });
 

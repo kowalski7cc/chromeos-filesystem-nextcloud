@@ -94,5 +94,21 @@
   "openInWeb": {
     "message": "ウェブで開く",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-  }
+    },
+    "settingsTitle": { "message": "転送パフォーマンス設定" },
+    "settingsDescription": { "message": "これらのグローバル設定は、マウントされたすべてのサーバーに適用されます。変更は新しく開いたファイルに反映されます。" },
+    "uploadChunkSize": { "message": "アップロードチャンクサイズ" },
+    "uploadChunkSizeHint": { "message": "Nextcloudでは5 MiB以上のチャンクが必要です。設定可能範囲: 5～100 MiB。" },
+    "downloadReadAheadSize": { "message": "ダウンロード先読みサイズ" },
+    "downloadReadAheadSizeHint": { "message": "先読み範囲ごとに取得するバイト数。設定可能範囲: 1～64 MiB。" },
+    "downloadCacheLimitLabel": { "message": "ダウンロードキャッシュ上限" },
+    "downloadCacheSizeHint": { "message": "キャッシュ範囲に使用する最大メモリ。先読み範囲1つ分以上にしてください。" },
+    "sequentialPrefetch": { "message": "連続ダウンロードの先読み" },
+    "sequentialPrefetchHint": { "message": "連続して読み取るときに次の範囲を先読みします。" },
+    "resetSettings": { "message": "既定値に戻す" },
+    "saveSettings": { "message": "設定を保存" },
+    "settingsSaved": { "message": "設定を保存しました。" },
+    "settingsReset": { "message": "既定値に戻しました。" },
+    "settingsLoadError": { "message": "設定を読み込めませんでした。拡張機能のストレージを確認してページを再読み込みしてください。" },
+    "settingsSaveError": { "message": "設定を保存できませんでした。値を確認してもう一度お試しください。" }
 }

@@ -1,5 +1,8 @@
+import { DEFAULT_TRANSFER_SETTINGS } from './transfer_settings';
+
 export const OPEN_IN_WEB_ACTION = 'open-in-web';
-export const NEXTCLOUD_UPLOAD_CHUNK_SIZE = 10 * 1024 * 1024;
+export const NEXTCLOUD_UPLOAD_CHUNK_SIZE =
+  DEFAULT_TRANSFER_SETTINGS.uploadChunkSize;
 export const NEXTCLOUD_MAX_UPLOAD_CHUNKS = 10000;
 
 export const NEXTCLOUD_FILE_INFO_PROPFIND_BODY =
@@ -78,11 +81,17 @@ export function buildNextcloudFileDestination(
   return `${origin}/remote.php/dav/files/${encodeURIComponent(username)}${encodedPath}`;
 }
 
-export function getNextcloudUploadChunkCount(fileSize: number): number {
+export function getNextcloudUploadChunkCount(
+  fileSize: number,
+  chunkSize = NEXTCLOUD_UPLOAD_CHUNK_SIZE
+): number {
   if (!Number.isSafeInteger(fileSize) || fileSize < 0)
     throw new Error('Nextcloud upload size must be a non-negative safe integer');
+  if (!Number.isSafeInteger(chunkSize) || chunkSize < 5 * 1024 * 1024 ||
+    chunkSize > 5 * 1024 * 1024 * 1024)
+    throw new Error('Nextcloud upload chunk size must be between 5 MiB and 5 GiB');
 
-  const chunkCount = Math.ceil(fileSize / NEXTCLOUD_UPLOAD_CHUNK_SIZE);
+  const chunkCount = Math.ceil(fileSize / chunkSize);
   if (chunkCount > NEXTCLOUD_MAX_UPLOAD_CHUNKS)
     throw new Error(`Nextcloud uploads are limited to ${NEXTCLOUD_MAX_UPLOAD_CHUNKS} chunks`);
   return chunkCount;
@@ -112,6 +121,7 @@ interface NextcloudUploadTimingCallbacks {
 
 export interface NextcloudUploadOptions extends NextcloudUploadTimingCallbacks {
   firstChunkIndex?: number
+  chunkSize?: number
 }
 
 export async function uploadNextcloudChunk(
@@ -153,7 +163,8 @@ export async function uploadNextcloudFile(
   readRange: (offset: number, length: number) => Promise<ArrayBuffer>,
   options: NextcloudUploadOptions = {}
 ): Promise<NextcloudUploadTimings> {
-  const chunkCount = getNextcloudUploadChunkCount(fileSize);
+  const chunkSize = options.chunkSize ?? NEXTCLOUD_UPLOAD_CHUNK_SIZE;
+  const chunkCount = getNextcloudUploadChunkCount(fileSize, chunkSize);
 
   if (chunkCount === 0) {
     const uploadStartedAt = performance.now();
@@ -186,8 +197,8 @@ export async function uploadNextcloudFile(
     firstChunkIndex > chunkCount)
     throw new Error('First Nextcloud upload chunk index is out of range');
   for (let index = firstChunkIndex; index < chunkCount; index++) {
-    const start = index * NEXTCLOUD_UPLOAD_CHUNK_SIZE;
-    const end = Math.min(start + NEXTCLOUD_UPLOAD_CHUNK_SIZE, fileSize);
+    const start = index * chunkSize;
+    const end = Math.min(start + chunkSize, fileSize);
     await client.customRequest(`${uploadPath}/${String(index + 1).padStart(5, '0')}`, {
       method: 'PUT',
       headers,

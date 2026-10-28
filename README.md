@@ -26,18 +26,30 @@ Nextcloud writes use the recommended
 are staged in 256 KiB IndexedDB blocks, so each write only updates affected
 blocks instead of copying and persisting the entire accumulated file. This
 supports arbitrary write offsets and survives service-worker restarts. Full
-10 MiB chunks are uploaded in numeric order as soon as the staged file contains
-them; a write that changes an already-uploaded chunk causes that chunk to be
-sent again. This moves most network transfer out of the close callback while
-preserving out-of-order writes. Close uploads any remaining final partial
-chunk and asks Nextcloud to assemble the file. The final chunk may be smaller;
+10 MiB chunks by default (configurable) are uploaded in numeric order as soon
+as the staged file contains them; a write that changes an already-uploaded
+chunk causes that chunk to be sent again. This moves most network transfer out
+of the close callback while preserving out-of-order writes. Close uploads any
+remaining final partial chunk and asks Nextcloud to assemble the file. The
+final chunk may be smaller;
 Nextcloud's 10,000-chunk limit is enforced. Empty files are sent with a direct
 PUT.
 
-Downloads use HTTP range read-ahead: small and sequential reads are served from
-16 MiB ranges held in a 64 MiB process-wide LRU cache. Concurrent reads for the
-same range of an open file share one request. Larger individual reads fetch
-only the requested range. Range responses are checked before being returned.
+Downloads use HTTP range read-ahead: by default, small and sequential reads are
+served from 16 MiB ranges held in a 64 MiB process-wide LRU cache. Concurrent
+reads for the same range of an open file share one request. Larger individual
+reads fetch only the requested range. Range responses are checked before being
+returned.
+
+Transfer tuning is available from the extension's **Settings** page in
+`chrome://extensions`. Settings apply globally to all mounts and are stored
+locally. Upload chunks can be set from 5 to 100 MiB (default 10 MiB); download
+read-ahead ranges from 1 to 64 MiB (default 16 MiB); and the shared download
+cache from 16 to 512 MiB (default 64 MiB). The cache limit must be at least as
+large as one read-ahead range. Sequential prefetch is enabled by default and
+can be disabled. Settings apply to newly opened files; an active upload keeps
+its selected chunk size so its staged and already-uploaded chunks remain
+consistent.
 
 The extension logs an `Upload timing` summary after a successful write close.
 It reports file size, write count/bytes, cumulative write-handler time observed

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title></title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1 data-i18n="settingsTitle"></h1>
+  <p id="settingsDescription" data-i18n="settingsDescription"></p>
+
+  <form id="settingsForm">
+    <table>
+      <tbody>
+        <tr>
+          <th><label for="uploadChunkSize" data-i18n="uploadChunkSize"></label></th>
+          <td>
+            <div class="size-input">
+              <input id="uploadChunkSize" type="number" min="5" max="100" step="1" required>
+              <span>MiB</span>
+            </div>
+            <small class="hint" data-i18n="uploadChunkSizeHint"></small>
+          </td>
+        </tr>
+        <tr>
+          <th><label for="downloadReadAheadSize" data-i18n="downloadReadAheadSize"></label></th>
+          <td>
+            <div class="size-input">
+              <input id="downloadReadAheadSize" type="number" min="1" max="64" step="1" required>
+              <span>MiB</span>
+            </div>
+            <small class="hint" data-i18n="downloadReadAheadSizeHint"></small>
+          </td>
+        </tr>
+        <tr>
+          <th><label id="downloadCacheSizeLabel" for="downloadCacheSize"></label></th>
+          <td>
+            <div class="size-input">
+              <input id="downloadCacheSize" type="number" min="16" max="512" step="1" required>
+              <span>MiB</span>
+            </div>
+            <small class="hint" data-i18n="downloadCacheSizeHint"></small>
+          </td>
+        </tr>
+        <tr>
+          <th><label for="sequentialPrefetch" data-i18n="sequentialPrefetch"></label></th>
+          <td>
+            <label class="checkbox-row">
+              <input id="sequentialPrefetch" type="checkbox">
+              <span data-i18n="sequentialPrefetchHint"></span>
+            </label>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="row">
+      <span id="message" role="status" aria-live="polite"></span>
+      <div class="button-group">
+        <button id="btnReset" type="button" class="secondary" data-i18n="resetSettings"></button>
+        <button id="btnSave" type="submit" data-i18n="saveSettings"></button>
+      </div>
+    </div>
+  </form>
+
+  <script type="module" src="node_modules/webextension-polyfill/dist/browser-polyfill.min.js"></script>
+  <script type="module" src="dist/options.js"></script>
+</body>
+</html>

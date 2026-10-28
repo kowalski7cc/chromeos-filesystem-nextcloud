@@ -8,6 +8,7 @@ export interface OpenedFileRecord {
   buffer: ArrayBuffer
   recoverable: boolean
   size?: number
+  uploadChunkSize?: number
   writeCalls?: number
   writeBytes?: number
   chunkVersions?: Record<string, number>

@@ -94,5 +94,21 @@
   "openInWeb": {
     "message": "Відкрити у вебі",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-  }
+    },
+    "settingsTitle": { "message": "Налаштування продуктивності передавання" },
+    "settingsDescription": { "message": "Ці глобальні налаштування діють для всіх підключених серверів. Зміни застосовуються до нових відкритих файлів." },
+    "uploadChunkSize": { "message": "Розмір частини завантаження" },
+    "uploadChunkSizeHint": { "message": "Nextcloud потребує частини розміром щонайменше 5 MiB. Дозволено: 5–100 MiB." },
+    "downloadReadAheadSize": { "message": "Розмір попереднього читання" },
+    "downloadReadAheadSizeHint": { "message": "Кількість байтів у кожному діапазоні попереднього читання. Дозволено: 1–64 MiB." },
+    "downloadCacheLimitLabel": { "message": "Обмеження кешу завантажень" },
+    "downloadCacheSizeHint": { "message": "Максимальна пам’ять для кешованих діапазонів; має бути не меншою за один діапазон попереднього читання." },
+    "sequentialPrefetch": { "message": "Послідовне попереднє завантаження" },
+    "sequentialPrefetchHint": { "message": "Завантажувати наступний діапазон під час послідовного читання." },
+    "resetSettings": { "message": "Відновити типові значення" },
+    "saveSettings": { "message": "Зберегти налаштування" },
+    "settingsSaved": { "message": "Налаштування збережено." },
+    "settingsReset": { "message": "Типові значення відновлено." },
+    "settingsLoadError": { "message": "Не вдалося завантажити налаштування. Перевірте сховище розширення та перезавантажте сторінку." },
+    "settingsSaveError": { "message": "Не вдалося зберегти налаштування. Перевірте значення та спробуйте ще раз." }
 }

@@ -52,10 +52,89 @@ test('manifest declares a Chrome 154 MV3 service worker and public permissions',
   assert.equal(manifest.manifest_version, 3);
   assert.equal(manifest.minimum_chrome_version, '154');
   assert.equal(manifest.background.service_worker, 'dist/background.js');
+  assert.deepEqual(manifest.options_ui, {
+    page: 'options.html',
+    open_in_tab: true,
+  });
+  assert.ok(fs.existsSync(path.join(__dirname, '../options.html')));
   assert.ok(manifest.permissions.includes('declarativeNetRequestWithHostAccess'));
   assert.ok(!manifest.permissions.includes('webRequestBlocking'));
   assert.ok(manifest.optional_host_permissions.includes('https://*/'));
   assert.equal(manifest.file_system_provider_capabilities.source, 'network');
+});
+
+test('transfer settings use defaults, validate bounds, and persist globally', async () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '../src/transfer_settings.ts'),
+    'utf8'
+  );
+  const compiled = typescript.transpileModule(source, {
+    compilerOptions: {
+      module: typescript.ModuleKind.CommonJS,
+      target: typescript.ScriptTarget.ES2020,
+    },
+  }).outputText;
+  const storage = {};
+  const browser = {
+    storage: {
+      local: {
+        async get(key) {
+          return { [key]: storage[key] };
+        },
+        async set(values) {
+          Object.assign(storage, values);
+        },
+      },
+    },
+  };
+  const settingsModule = { exports: {} };
+  new Function('exports', 'require', 'module', 'browser', compiled)(
+    settingsModule.exports,
+    require,
+    settingsModule,
+    browser
+  );
+  const {
+    DEFAULT_TRANSFER_SETTINGS,
+    MEBIBYTE,
+    TRANSFER_SETTINGS_KEY,
+    loadTransferSettings,
+    saveTransferSettings,
+    validateTransferSettings,
+  } = settingsModule.exports;
+
+  assert.deepEqual(await loadTransferSettings(), DEFAULT_TRANSFER_SETTINGS);
+  const customSettings = {
+    uploadChunkSize: 5 * MEBIBYTE,
+    downloadReadAheadSize: 8 * MEBIBYTE,
+    downloadCacheSize: 32 * MEBIBYTE,
+    sequentialPrefetch: false,
+  };
+  assert.deepEqual(await saveTransferSettings(customSettings), customSettings);
+  assert.deepEqual(storage[TRANSFER_SETTINGS_KEY], customSettings);
+  assert.deepEqual(await loadTransferSettings(), customSettings);
+  assert.throws(
+    () => validateTransferSettings({
+      ...customSettings,
+      uploadChunkSize: 4 * MEBIBYTE,
+    }),
+    /Upload chunk size must be/
+  );
+  assert.throws(
+    () => validateTransferSettings({
+      ...customSettings,
+      downloadCacheSize: 4 * MEBIBYTE,
+    }),
+    /Download cache size must be/
+  );
+  assert.throws(
+    () => validateTransferSettings({
+      ...customSettings,
+      downloadReadAheadSize: 32 * MEBIBYTE,
+      downloadCacheSize: 16 * MEBIBYTE,
+    }),
+    /at least the read-ahead size/
+  );
 });
 
 test('WebDAV browser bundle does not depend on a document global', () => {
@@ -348,6 +427,7 @@ test('chunk upload versions persist and detect writes to previously uploaded chu
     buffer: new ArrayBuffer(0),
     recoverable: true,
     size: 0,
+    uploadChunkSize: 5 * 1024 * 1024,
   });
 
   await store.stageOpenedFileWrite(
@@ -367,6 +447,7 @@ test('chunk upload versions persist and detect writes to previously uploaded chu
   );
 
   const record = await store.getOpenedFile(fileSystemId, openRequestId);
+  assert.equal(record.uploadChunkSize, 5 * 1024 * 1024);
   assert.deepEqual(record.chunkVersions, { 0: 2, 1: 1 });
   assert.deepEqual(record.uploadedChunkVersions, { 0: 1 });
   assert.equal(record.nextChunkToUpload, 1);

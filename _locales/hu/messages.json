@@ -94,5 +94,21 @@
   "openInWeb": {
     "message": "Megnyitás a weben",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-  }
+    },
+    "settingsTitle": { "message": "Átviteli teljesítmény beállításai" },
+    "settingsDescription": { "message": "Ezek a globális beállítások minden csatlakoztatott szerverre érvényesek. A módosítások az újonnan megnyitott fájlokra vonatkoznak." },
+    "uploadChunkSize": { "message": "Feltöltési darab mérete" },
+    "uploadChunkSizeHint": { "message": "A Nextcloud legalább 5 MiB-os darabokat igényel. Engedélyezett: 5–100 MiB." },
+    "downloadReadAheadSize": { "message": "Letöltési előreolvasás mérete" },
+    "downloadReadAheadSizeHint": { "message": "Az egy előreolvasási tartományban lekért bájtok. Engedélyezett: 1–64 MiB." },
+    "downloadCacheLimitLabel": { "message": "Letöltési gyorsítótár korlátja" },
+    "downloadCacheSizeHint": { "message": "A gyorsítótárazott tartományok maximális memóriája; legalább egy előreolvasási tartomány mérete." },
+    "sequentialPrefetch": { "message": "Szekvenciális letöltési előtöltés" },
+    "sequentialPrefetchHint": { "message": "Szekvenciális olvasáskor kérje le a következő tartományt." },
+    "resetSettings": { "message": "Alapértelmezések visszaállítása" },
+    "saveSettings": { "message": "Beállítások mentése" },
+    "settingsSaved": { "message": "Beállítások mentve." },
+    "settingsReset": { "message": "Alapértelmezések visszaállítva." },
+    "settingsLoadError": { "message": "A beállítások nem tölthetők be. Ellenőrizze a bővítmény tárhelyét, majd töltse újra az oldalt." },
+    "settingsSaveError": { "message": "A beállítások nem menthetők. Ellenőrizze az értékeket, majd próbálja újra." }
 }
