@@ -63,6 +63,15 @@
   "serverDomain": {
     "message": "Τομέας διακομιστή"
   },
+  "invalidServerDomain": {
+    "message": "Εισαγάγετε μια έγκυρη διεύθυνση διακομιστή HTTPS, όπως cloud.example.com."
+  },
+  "connectionFailed": {
+    "message": "Δεν ήταν δυνατή η σύνδεση με τον διακομιστή. Ελέγξτε τη διεύθυνση και δοκιμάστε ξανά."
+  },
+  "instanceNameUnavailable": {
+    "message": "Δεν ήταν δυνατή η ανάκτηση του ονόματος. Θα χρησιμοποιηθεί το Nextcloud."
+  },
   "advancedSettings": {
     "message": "Σύνθετες ρυθμίσεις",
     "description": "Summary label for the advanced settings expander."

@@ -83,6 +83,15 @@
     "message": "Serverdomäne",
     "description": "Label for the server domain field"
   },
+  "invalidServerDomain": {
+    "message": "Geben Sie eine gültige HTTPS-Serveradresse ein, z. B. cloud.example.com."
+  },
+  "connectionFailed": {
+    "message": "Verbindung zum Server nicht möglich. Prüfen Sie die Adresse und versuchen Sie es erneut."
+  },
+  "instanceNameUnavailable": {
+    "message": "Der Instanzname konnte nicht abgerufen werden. Nextcloud wird verwendet."
+  },
   "advancedSettings": {
     "message": "Erweiterte Einstellungen",
     "description": "Summary label for the advanced settings expander."

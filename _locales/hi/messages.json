@@ -63,6 +63,15 @@
   "serverDomain": {
     "message": "सर्वर डोमेन"
   },
+  "invalidServerDomain": {
+    "message": "cloud.example.com जैसे मान्य HTTPS सर्वर पते का उपयोग करें।"
+  },
+  "connectionFailed": {
+    "message": "सर्वर से कनेक्ट नहीं हो सका। पता जाँचें और फिर कोशिश करें।"
+  },
+  "instanceNameUnavailable": {
+    "message": "इंस्टेंस का नाम नहीं मिल सका। इसके बजाय Nextcloud का उपयोग होगा।"
+  },
   "advancedSettings": {
     "message": "एडवांस सेटिंग",
     "description": "Summary label for the advanced settings expander."

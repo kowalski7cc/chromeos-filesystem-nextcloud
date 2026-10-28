@@ -83,6 +83,15 @@
     "message": "Домен сервера",
     "description": "Label for the server domain field"
   },
+  "invalidServerDomain": {
+    "message": "Введіть дійсну HTTPS-адресу сервера, наприклад cloud.example.com."
+  },
+  "connectionFailed": {
+    "message": "Не вдалося підключитися до сервера. Перевірте адресу й повторіть спробу."
+  },
+  "instanceNameUnavailable": {
+    "message": "Не вдалося отримати назву екземпляра. Буде використано Nextcloud."
+  },
   "advancedSettings": {
     "message": "Додаткові налаштування",
     "description": "Summary label for the advanced settings expander."

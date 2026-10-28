@@ -83,6 +83,15 @@
     "message": "サーバードメイン",
     "description": "Label for the server domain field"
   },
+  "invalidServerDomain": {
+    "message": "cloud.example.com のような有効な HTTPS サーバーアドレスを入力してください。"
+  },
+  "connectionFailed": {
+    "message": "サーバーに接続できません。アドレスを確認して再試行してください。"
+  },
+  "instanceNameUnavailable": {
+    "message": "インスタンス名を取得できませんでした。Nextcloud を使用します。"
+  },
   "advancedSettings": {
     "message": "詳細設定",
     "description": "Summary label for the advanced settings expander."

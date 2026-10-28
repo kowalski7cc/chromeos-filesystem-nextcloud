@@ -83,6 +83,15 @@
     "message": "Kiszolgáló domaine",
     "description": "Label for the server domain field"
   },
+  "invalidServerDomain": {
+    "message": "Adjon meg egy érvényes HTTPS-kiszolgálócímet, például: cloud.example.com."
+  },
+  "connectionFailed": {
+    "message": "Nem sikerült csatlakozni a kiszolgálóhoz. Ellenőrizze a címet, majd próbálja újra."
+  },
+  "instanceNameUnavailable": {
+    "message": "A példány neve nem kérhető le. A Nextcloud lesz használva."
+  },
   "advancedSettings": {
     "message": "Speciális beállítások",
     "description": "Summary label for the advanced settings expander."

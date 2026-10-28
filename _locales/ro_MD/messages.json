@@ -63,6 +63,15 @@
   "serverDomain": {
     "message": "Domeniul serverului"
   },
+  "invalidServerDomain": {
+    "message": "Introdu o adresă HTTPS validă, de exemplu cloud.example.com."
+  },
+  "connectionFailed": {
+    "message": "Conectarea la server a eșuat. Verifică adresa și încearcă din nou."
+  },
+  "instanceNameUnavailable": {
+    "message": "Numele instanței nu a putut fi preluat. Se va folosi Nextcloud."
+  },
   "advancedSettings": {
     "message": "Setări avansate",
     "description": "Summary label for the advanced settings expander."

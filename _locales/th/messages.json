@@ -63,6 +63,15 @@
   "serverDomain": {
     "message": "โดเมนเซิร์ฟเวอร์"
   },
+  "invalidServerDomain": {
+    "message": "ป้อนที่อยู่เซิร์ฟเวอร์ HTTPS ที่ถูกต้อง เช่น cloud.example.com"
+  },
+  "connectionFailed": {
+    "message": "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ โปรดตรวจสอบที่อยู่แล้วลองอีกครั้ง"
+  },
+  "instanceNameUnavailable": {
+    "message": "ดึงชื่ออินสแตนซ์ไม่ได้ จะใช้ Nextcloud แทน"
+  },
   "advancedSettings": {
     "message": "การตั้งค่าขั้นสูง",
     "description": "Summary label for the advanced settings expander."

@@ -83,6 +83,15 @@
     "message": "Doména serveru",
     "description": "Label for the server domain field"
   },
+  "invalidServerDomain": {
+    "message": "Zadejte platnou adresu serveru HTTPS, například cloud.example.com."
+  },
+  "connectionFailed": {
+    "message": "K serveru se nepodařilo připojit. Zkontrolujte adresu a zkuste to znovu."
+  },
+  "instanceNameUnavailable": {
+    "message": "Název instance se nepodařilo získat. Použije se Nextcloud."
+  },
   "advancedSettings": {
     "message": "Pokročilá nastavení",
     "description": "Summary label for the advanced settings expander."

@@ -23,6 +23,22 @@ function parseInstanceNameFromCapabilities(data) {
   return trimmed || null;
 }
 
+function normalizeServerDomain(value) {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  try {
+    const url = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`);
+    if (url.protocol !== 'https:' || !url.hostname || url.username || url.password ||
+        url.pathname !== '/' || url.search || url.hash) {
+      return null;
+    }
+    return url.host;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchDefaultInstanceName(domain) {
   const url = `https://${domain}/ocs/v2.php/cloud/capabilities?format=json`;
 
@@ -146,54 +162,62 @@ document.querySelector('#domain').addEventListener('keydown', ev => {
 });
 
 document.querySelector('#btnOk').addEventListener('click', async ev => {
-  const btnOk = ev.target;
+  const btnOk = ev.currentTarget || ev.target;
   const domainInput = document.querySelector('#domain');
-  const domain = domainInput.value.trim();
-  domainInput.value = domain;
-  if (!domainInput.reportValidity()) return;
-
-  btnOk.setAttribute('disabled', 'true');
-  const username = document.querySelector('#username').value;
-  const password = document.querySelector('#password').value;
-
-  const granted = await browser.permissions.request({
-    origins: [`https://${domain}/`]
-  });
-  if (!granted) {
-    btnOk.removeAttribute('disabled');
+  const message = document.querySelector('#message');
+  const domain = normalizeServerDomain(domainInput.value);
+  if (!domain) {
+    domainInput.setCustomValidity(i18n('invalidServerDomain'));
+    message.textContent = i18n('invalidServerDomain');
+    domainInput.reportValidity();
     return;
   }
+  domainInput.setCustomValidity('');
+  domainInput.value = domain;
 
-  let resolvedName = nameInput.value || 'Nextcloud';
-  if (useInstanceNameInput && useInstanceNameInput.checked) {
-    const defaultName = await fetchDefaultInstanceName(domain);
-    resolvedName = defaultName || 'Nextcloud';
-    nameInput.value = resolvedName;
-  }
-
-  const request = {
-    server: 'oc',
-    name: resolvedName,
-    domain,
-    username,
-    password,
-  };
-
-  const details = document.querySelector('#expander');
-  if (!details.open) {
-    Object.assign(request, await ncLoginFlow(domain));
-  }
-
-  const message = document.querySelector('#message');
-  message.innerText = i18n('mounting');
-
-  await browser.runtime.sendMessage(['mount', request])
-    .then(window.close)
-    .catch(error => {
-      console.error(error);
-      message.innerText = error.message;
-      btnOk.removeAttribute('disabled');
+  btnOk.disabled = true;
+  message.textContent = '';
+  try {
+    const granted = await browser.permissions.request({
+      origins: [`https://${domain}/*`]
     });
+    if (!granted) {
+      message.textContent = i18n('connectionFailed');
+      return;
+    }
+
+    const username = document.querySelector('#username').value;
+    const password = document.querySelector('#password').value;
+    let resolvedName = nameInput.value || 'Nextcloud';
+    if (useInstanceNameInput && useInstanceNameInput.checked) {
+      const defaultName = await fetchDefaultInstanceName(domain);
+      resolvedName = defaultName || 'Nextcloud';
+      nameInput.value = resolvedName;
+      if (!defaultName) message.textContent = i18n('instanceNameUnavailable');
+    }
+
+    const request = {
+      server: 'oc',
+      name: resolvedName,
+      domain,
+      username,
+      password,
+    };
+
+    const details = document.querySelector('#expander');
+    if (!details.open) {
+      Object.assign(request, await ncLoginFlow(domain));
+    }
+
+    if (!message.textContent) message.textContent = i18n('mounting');
+    await browser.runtime.sendMessage(['mount', request]);
+    window.close();
+  } catch (error) {
+    console.error('Could not connect or mount the server', error);
+    message.textContent = i18n('connectionFailed');
+  } finally {
+    btnOk.disabled = false;
+  }
 });
 
 document.querySelector('#expander').addEventListener('toggle', ev => {
@@ -211,5 +235,6 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     parseInstanceNameFromCapabilities,
     fetchDefaultInstanceName,
+    normalizeServerDomain,
   };
 }

@@ -423,6 +423,11 @@ test('all locale catalogs define extension UI message labels', () => {
   );
   const windowMessageKeys = [...windowHtml.matchAll(/__MSG_([A-Za-z0-9_]+)__/g)]
     .map(([, key]) => key);
+  windowMessageKeys.push(
+    'invalidServerDomain',
+    'connectionFailed',
+    'instanceNameUnavailable'
+  );
   const englishMessages = JSON.parse(fs.readFileSync(
     path.join(localeRoot, 'en', 'messages.json'),
     'utf8'

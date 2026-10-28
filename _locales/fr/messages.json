@@ -83,6 +83,15 @@
     "message": "Domaine du serveur",
     "description": "Label for the server domain field"
   },
+  "invalidServerDomain": {
+    "message": "Saisissez une adresse HTTPS valide, par exemple cloud.example.com."
+  },
+  "connectionFailed": {
+    "message": "Impossible de se connecter au serveur. Vérifiez l’adresse et réessayez."
+  },
+  "instanceNameUnavailable": {
+    "message": "Impossible de récupérer le nom de l’instance. Nextcloud sera utilisé."
+  },
   "advancedSettings": {
     "message": "Paramètres avancés",
     "description": "Summary label for the advanced settings expander."

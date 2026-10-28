@@ -63,6 +63,15 @@
   "serverDomain": {
     "message": "Serverio domenas"
   },
+  "invalidServerDomain": {
+    "message": "Įveskite galiojantį HTTPS serverio adresą, pvz., cloud.example.com."
+  },
+  "connectionFailed": {
+    "message": "Nepavyko prisijungti prie serverio. Patikrinkite adresą ir bandykite dar kartą."
+  },
+  "instanceNameUnavailable": {
+    "message": "Nepavyko gauti egzemplioriaus pavadinimo. Bus naudojamas „Nextcloud“."
+  },
   "advancedSettings": {
     "message": "Išplėstiniai nustatymai",
     "description": "Summary label for the advanced settings expander."

@@ -83,6 +83,15 @@
     "message": "服务器域名",
     "description": "Label for the server domain field"
   },
+  "invalidServerDomain": {
+    "message": "请输入有效的 HTTPS 服务器地址，例如 cloud.example.com。"
+  },
+  "connectionFailed": {
+    "message": "无法连接到服务器。请检查地址后重试。"
+  },
+  "instanceNameUnavailable": {
+    "message": "无法获取实例名称，将改用 Nextcloud。"
+  },
   "advancedSettings": {
     "message": "高级设置",
     "description": "Summary label for the advanced settings expander."

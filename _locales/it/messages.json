@@ -1,6 +1,6 @@
 {
   "appName": {
-    "message": "Servizio di archiviazione ChromeOS per Nextcloud aaa",
+    "message": "Servizio di archiviazione ChromeOS per Nextcloud",
     "description": "The name of the application"
   },
   "appDescription": {
@@ -82,6 +82,15 @@
   "serverDomain": {
     "message": "Dominio del server",
     "description": "Label for the server domain field"
+  },
+  "invalidServerDomain": {
+    "message": "Inserisci un indirizzo HTTPS valido, ad esempio cloud.example.com."
+  },
+  "connectionFailed": {
+    "message": "Impossibile connettersi al server. Controlla l’indirizzo e riprova."
+  },
+  "instanceNameUnavailable": {
+    "message": "Impossibile recuperare il nome dell’istanza. Verrà usato Nextcloud."
   },
   "advancedSettings": {
     "message": "Impostazioni avanzate",
