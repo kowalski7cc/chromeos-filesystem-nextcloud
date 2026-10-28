@@ -1,6 +1,6 @@
 {
   "name": "chromeos-filesystem-nextcloud",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "Nextcloud file system provider for Chrome OS",
   "homepage": "https://github.com/kowalski7cc/chromeos-filesystem-nextcloud",
   "bugs": {
@@ -24,7 +24,7 @@
     "build": "webpack --config webpack.dev.js",
     "test": "node --test test/*.test.js",
     "typecheck": "tsc --noEmit",
-    "package": "webpack --config webpack.prod.js && rm -f ext.zip && zip -r ext.zip manifest.json _locales dist/background.js icons window.js window.html style.css node_modules/webextension-polyfill/dist/browser-polyfill.min.js"
+    "package": "webpack --config webpack.prod.js && rm -f ext.zip && zip -r ext.zip manifest.json _locales dist/background.js dist/options.js icons window.js window.html options.html style.css node_modules/webextension-polyfill/dist/browser-polyfill.min.js"
   },
   "devDependencies": {
     "@types/chrome": "^0.3.7",
