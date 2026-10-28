@@ -3,7 +3,7 @@
   "name": "__MSG_appName__",
   "short_name": "__MSG_shortName__",
   "description": "__MSG_appDescription__",
-  "version": "4.2.1",
+  "version": "4.3.0",
   "minimum_chrome_version": "154",
   "author": "Kowalski Dragon (kowalski7cc)",
   "homepage_url": "https://github.com/kowalski7cc/chromeos-filesystem-nextcloud",
@@ -31,6 +31,7 @@
     "128": "icons/128x128.png"
   },
   "file_system_provider_capabilities": {
+    "configurable": true,
     "source": "network",
     "multiple_mounts": true
   }
