@@ -99,6 +99,40 @@ interface NextcloudUploadClient {
   ): Promise<unknown>
 }
 
+export interface NextcloudUploadTimings {
+  chunkCount: number
+  chunkUploadMs: number
+  assemblyMs: number
+}
+
+interface NextcloudUploadTimingCallbacks {
+  onChunksUploaded?: (timing: Pick<NextcloudUploadTimings, 'chunkCount' | 'chunkUploadMs'>) => void
+  onAssemblyComplete?: (assemblyMs: number) => void
+}
+
+export interface NextcloudUploadOptions extends NextcloudUploadTimingCallbacks {
+  firstChunkIndex?: number
+}
+
+export async function uploadNextcloudChunk(
+  client: NextcloudUploadClient,
+  uploadPath: string,
+  chunkIndex: number,
+  destination: string,
+  data: ArrayBuffer,
+  totalLength?: number
+): Promise<void> {
+  const headers: Record<string, string> = { Destination: destination };
+  if (totalLength !== undefined)
+    headers['OC-Total-Length'] = String(totalLength);
+  const chunkName = String(chunkIndex + 1).padStart(5, '0');
+  await client.customRequest(`${uploadPath}/${chunkName}`, {
+    method: 'PUT',
+    headers,
+    data,
+  });
+}
+
 export async function createNextcloudUploadFolder(
   client: NextcloudUploadClient,
   uploadPath: string,
@@ -116,36 +150,66 @@ export async function uploadNextcloudFile(
   destinationPath: string,
   destination: string,
   fileSize: number,
-  readRange: (offset: number, length: number) => Promise<ArrayBuffer>
-): Promise<void> {
+  readRange: (offset: number, length: number) => Promise<ArrayBuffer>,
+  options: NextcloudUploadOptions = {}
+): Promise<NextcloudUploadTimings> {
   const chunkCount = getNextcloudUploadChunkCount(fileSize);
 
   if (chunkCount === 0) {
+    const uploadStartedAt = performance.now();
     await client.customRequest(destinationPath, {
       method: 'PUT',
       data: await readRange(0, 0),
     });
     await client.customRequest(`${uploadPath}/`, { method: 'DELETE' });
-    return;
+    const timing = {
+      chunkCount: 0,
+      chunkUploadMs: performance.now() - uploadStartedAt,
+      assemblyMs: 0,
+    };
+    options.onChunksUploaded?.({
+      chunkCount: timing.chunkCount,
+      chunkUploadMs: timing.chunkUploadMs,
+    });
+    options.onAssemblyComplete?.(timing.assemblyMs);
+    return timing;
   }
 
   const headers = {
     Destination: destination,
     'OC-Total-Length': String(fileSize),
   };
-  for (let index = 0; index < chunkCount; index++) {
+  const chunkUploadStartedAt = performance.now();
+  const firstChunkIndex = options.firstChunkIndex ?? 0;
+  if (!Number.isSafeInteger(firstChunkIndex) ||
+    firstChunkIndex < 0 ||
+    firstChunkIndex > chunkCount)
+    throw new Error('First Nextcloud upload chunk index is out of range');
+  for (let index = firstChunkIndex; index < chunkCount; index++) {
     const start = index * NEXTCLOUD_UPLOAD_CHUNK_SIZE;
     const end = Math.min(start + NEXTCLOUD_UPLOAD_CHUNK_SIZE, fileSize);
-    const chunkName = String(index + 1).padStart(5, '0');
-    await client.customRequest(`${uploadPath}/${chunkName}`, {
+    await client.customRequest(`${uploadPath}/${String(index + 1).padStart(5, '0')}`, {
       method: 'PUT',
       headers,
       data: await readRange(start, end - start),
     });
   }
+  const chunkUploadMs = performance.now() - chunkUploadStartedAt;
+  options.onChunksUploaded?.({
+    chunkCount: chunkCount - firstChunkIndex,
+    chunkUploadMs,
+  });
 
+  const assemblyStartedAt = performance.now();
   await client.customRequest(`${uploadPath}/.file`, {
     method: 'MOVE',
     headers,
   });
+  const assemblyMs = performance.now() - assemblyStartedAt;
+  options.onAssemblyComplete?.(assemblyMs);
+  return {
+    chunkCount: chunkCount - firstChunkIndex,
+    chunkUploadMs,
+    assemblyMs,
+  };
 }

@@ -321,6 +321,58 @@ test('block staging preserves overlapping writes, gaps, and bounded block count'
   database.close();
 });
 
+test('chunk upload versions persist and detect writes to previously uploaded chunks', async () => {
+  const storeSource = fs.readFileSync(path.join(__dirname, '../src/opened_files_store.ts'), 'utf8');
+  const compiled = typescript.transpileModule(storeSource, {
+    compilerOptions: {
+      module: typescript.ModuleKind.CommonJS,
+      target: typescript.ScriptTarget.ES2020,
+    },
+  }).outputText;
+  const storeModule = { exports: {} };
+  new Function('exports', 'require', 'module', compiled)(
+    storeModule.exports,
+    require,
+    storeModule
+  );
+  const store = storeModule.exports;
+  const fileSystemId = 'webdavfs://chunks.example.com/user';
+  const openRequestId = 37;
+  await store.putOpenedFile({
+    key: `${fileSystemId}:${openRequestId}`,
+    openRequestId,
+    fileSystemId,
+    filePath: '/chunked.bin',
+    mode: 'WRITE',
+    uuid: 'chunked-upload',
+    buffer: new ArrayBuffer(0),
+    recoverable: true,
+    size: 0,
+  });
+
+  await store.stageOpenedFileWrite(
+    fileSystemId,
+    openRequestId,
+    0,
+    new ArrayBuffer(8),
+    4
+  );
+  await store.markOpenedFileChunkUploaded(fileSystemId, openRequestId, 0, 1);
+  await store.stageOpenedFileWrite(
+    fileSystemId,
+    openRequestId,
+    1,
+    new ArrayBuffer(1),
+    4
+  );
+
+  const record = await store.getOpenedFile(fileSystemId, openRequestId);
+  assert.deepEqual(record.chunkVersions, { 0: 2, 1: 1 });
+  assert.deepEqual(record.uploadedChunkVersions, { 0: 1 });
+  assert.equal(record.nextChunkToUpload, 1);
+  await store.removeOpenedFile(fileSystemId, openRequestId);
+});
+
 test('block staging overlays new writes on legacy persisted buffers', async () => {
   const storeSource = fs.readFileSync(path.join(__dirname, '../src/opened_files_store.ts'), 'utf8');
   const compiled = typescript.transpileModule(storeSource, {

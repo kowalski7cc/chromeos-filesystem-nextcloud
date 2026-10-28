@@ -25,11 +25,14 @@ Nextcloud writes use the recommended
 [WebDAV Chunked Upload v2 API](https://docs.nextcloud.com/server/35/developer_manual/client_apis/WebDAV/chunking.html#chunked-upload-v2). File writes
 are staged in 256 KiB IndexedDB blocks, so each write only updates affected
 blocks instead of copying and persisting the entire accumulated file. This
-supports arbitrary write offsets and survives service-worker restarts. On
-close, ranges are read incrementally and uploaded in sequential 10 MiB chunks.
-The final chunk may be smaller; Nextcloud's 10,000-chunk limit is enforced.
-Empty files are sent with a direct PUT. A close request completes after the
-upload has been assembled on the server.
+supports arbitrary write offsets and survives service-worker restarts. Full
+10 MiB chunks are uploaded in numeric order as soon as the staged file contains
+them; a write that changes an already-uploaded chunk causes that chunk to be
+sent again. This moves most network transfer out of the close callback while
+preserving out-of-order writes. Close uploads any remaining final partial
+chunk and asks Nextcloud to assemble the file. The final chunk may be smaller;
+Nextcloud's 10,000-chunk limit is enforced. Empty files are sent with a direct
+PUT.
 
 Downloads use HTTP range read-ahead: small and sequential reads are served from
 16 MiB ranges held in a 64 MiB process-wide LRU cache. Concurrent reads for the
@@ -38,11 +41,16 @@ only the requested range. Range responses are checked before being returned.
 
 The extension logs an `Upload timing` summary after a successful write close.
 It reports file size, write count/bytes, cumulative write-handler time observed
-in the current service-worker lifetime, and close-time upload duration. The
-write count and bytes persist across worker restarts; the handler-time total
-does not.
+in the current service-worker lifetime, the number and duration of chunks
+uploaded during writes, and close-time upload duration. The write count and
+bytes persist across worker restarts; the handler-time and chunk timing totals
+do not.
 Successful read closes log a `Download timing` summary with range request
 count, fetched/returned bytes, cache hits, and cumulative range-request time.
+Large Nextcloud uploads log `Nextcloud chunks uploaded` before the final
+assembly request and `Nextcloud chunk assembly complete` after the server's
+final MOVE succeeds, so slow chunk transfer can be distinguished from server
+assembly latency.
 
 ownCloud writes continue to use a direct WebDAV PUT. Nextcloud's
 [bulk-upload API](https://docs.nextcloud.com/server/35/developer_manual/client_apis/WebDAV/bulkupload.html)

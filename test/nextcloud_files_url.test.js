@@ -31,6 +31,7 @@ const {
   NEXTCLOUD_UPLOAD_CHUNK_SIZE,
   NEXTCLOUD_FILE_INFO_PROPFIND_BODY,
   OPEN_IN_WEB_ACTION,
+  uploadNextcloudChunk,
   uploadNextcloudFile,
 } = helperModule.exports;
 
@@ -156,6 +157,34 @@ test('Nextcloud upload folder creation sends its final destination', async () =>
   }]);
 });
 
+test('Nextcloud chunks can be uploaded during writes with v2 destination headers', async () => {
+  const requests = [];
+  const client = {
+    async customRequest(path, options) {
+      requests.push({ path, options });
+    },
+  };
+  const destination = 'https://cloud.example.com/remote.php/dav/files/user/file.bin';
+  const data = new ArrayBuffer(NEXTCLOUD_UPLOAD_CHUNK_SIZE);
+
+  await uploadNextcloudChunk(
+    client,
+    '/uploads/user/upload-id',
+    2,
+    destination,
+    data
+  );
+
+  assert.deepEqual(requests, [{
+    path: '/uploads/user/upload-id/00003',
+    options: {
+      method: 'PUT',
+      headers: { Destination: destination },
+      data,
+    },
+  }]);
+});
+
 test('Nextcloud files upload as ordered numeric chunks with v2 headers', async () => {
   const requests = [];
   const client = {
@@ -165,6 +194,7 @@ test('Nextcloud files upload as ordered numeric chunks with v2 headers', async (
   };
   const fileSize = NEXTCLOUD_UPLOAD_CHUNK_SIZE * 2 + 3;
   const destination = 'https://cloud.example.com/remote.php/dav/files/user/file.bin';
+  const timingEvents = [];
 
   await uploadNextcloudFile(
     client,
@@ -173,7 +203,11 @@ test('Nextcloud files upload as ordered numeric chunks with v2 headers', async (
     destination,
     fileSize,
     async (offset, length) =>
-      new Uint8Array(length).map((_, index) => (offset + index) % 251).buffer
+      new Uint8Array(length).map((_, index) => (offset + index) % 251).buffer,
+    {
+      onChunksUploaded: timing => timingEvents.push(['chunks', timing]),
+      onAssemblyComplete: assemblyMs => timingEvents.push(['assembly', assemblyMs]),
+    }
   );
 
   assert.deepEqual(requests.map(({ path, options }) => [
@@ -190,6 +224,62 @@ test('Nextcloud files upload as ordered numeric chunks with v2 headers', async (
     assert.equal(options.headers.Destination, destination);
     assert.equal(options.headers['OC-Total-Length'], String(fileSize));
   }
+  assert.equal(timingEvents[0][0], 'chunks');
+  assert.deepEqual(timingEvents[0][1].chunkCount, 3);
+  assert.ok(timingEvents[0][1].chunkUploadMs >= 0);
+  assert.equal(timingEvents[1][0], 'assembly');
+  assert.ok(timingEvents[1][1] >= 0);
+});
+
+test('Nextcloud close upload skips chunks already sent during writes', async () => {
+  const requests = [];
+  const client = {
+    async customRequest(path, options) {
+      requests.push({ path, options });
+    },
+  };
+  const fileSize = NEXTCLOUD_UPLOAD_CHUNK_SIZE * 2 + 3;
+  const destination = 'https://cloud.example.com/remote.php/dav/files/user/file.bin';
+
+  await uploadNextcloudFile(
+    client,
+    '/uploads/user/upload-id',
+    '/files/user/file.bin',
+    destination,
+    fileSize,
+    async (_offset, length) => new ArrayBuffer(length),
+    { firstChunkIndex: 2 }
+  );
+
+  assert.deepEqual(requests.map(({ path, options }) => [
+    path,
+    options.method,
+    options.data?.byteLength,
+  ]), [
+    ['/uploads/user/upload-id/00003', 'PUT', 3],
+    ['/uploads/user/upload-id/.file', 'MOVE', undefined],
+  ]);
+});
+
+test('Nextcloud close upload rejects an invalid first chunk index', async () => {
+  const client = {
+    async customRequest() {
+      assert.fail('No request should be sent for an invalid chunk index');
+    },
+  };
+
+  await assert.rejects(
+    uploadNextcloudFile(
+      client,
+      '/uploads/user/upload-id',
+      '/files/user/file.bin',
+      'https://cloud.example.com/remote.php/dav/files/user/file.bin',
+      NEXTCLOUD_UPLOAD_CHUNK_SIZE,
+      async () => new ArrayBuffer(NEXTCLOUD_UPLOAD_CHUNK_SIZE),
+      { firstChunkIndex: -1 }
+    ),
+    /First Nextcloud upload chunk index is out of range/
+  );
 });
 
 test('empty Nextcloud files use a direct PUT and remove the temporary folder', async () => {

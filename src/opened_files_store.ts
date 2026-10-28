@@ -10,6 +10,9 @@ export interface OpenedFileRecord {
   size?: number
   writeCalls?: number
   writeBytes?: number
+  chunkVersions?: Record<string, number>
+  uploadedChunkVersions?: Record<string, number>
+  nextChunkToUpload?: number
 }
 
 const DATABASE_NAME = 'nextcloud-filesystem';
@@ -128,7 +131,8 @@ export async function stageOpenedFileWrite(
   fileSystemId: string,
   openRequestId: number,
   offset: number,
-  data: ArrayBuffer
+  data: ArrayBuffer,
+  uploadChunkSize?: number
 ): Promise<void> {
   if (!Number.isSafeInteger(offset) || offset < 0 ||
     !Number.isSafeInteger(offset + data.byteLength))
@@ -153,6 +157,15 @@ export async function stageOpenedFileWrite(
       }
 
       const writeEnd = offset + data.byteLength;
+      if (uploadChunkSize && writeEnd > offset) {
+        record.chunkVersions = record.chunkVersions || {};
+        const firstChunk = Math.floor(offset / uploadChunkSize);
+        const lastChunk = Math.floor((writeEnd - 1) / uploadChunkSize);
+        for (let chunkIndex = firstChunk; chunkIndex <= lastChunk; chunkIndex++) {
+          const key = String(chunkIndex);
+          record.chunkVersions[key] = (record.chunkVersions[key] || 0) + 1;
+        }
+      }
       const firstBlock = Math.floor(offset / OPENED_FILE_BLOCK_SIZE);
       const lastBlock = Math.floor(
         Math.max(offset, writeEnd - 1) / OPENED_FILE_BLOCK_SIZE
@@ -228,6 +241,27 @@ export async function stageOpenedFileWrite(
     await complete.catch(() => {});
     throw error;
   }
+}
+
+export async function markOpenedFileChunkUploaded(
+  fileSystemId: string,
+  openRequestId: number,
+  chunkIndex: number,
+  version: number
+): Promise<void> {
+  await updateOpenedFile(fileSystemId, openRequestId, record => {
+    record.uploadedChunkVersions = record.uploadedChunkVersions || {};
+    const key = String(chunkIndex);
+    record.uploadedChunkVersions[key] = Math.max(
+      record.uploadedChunkVersions[key] || 0,
+      version
+    );
+    record.nextChunkToUpload = Math.max(
+      record.nextChunkToUpload || 0,
+      chunkIndex + 1
+    );
+    return record;
+  });
 }
 
 export function openedFileSize(record: OpenedFileRecord): number {

@@ -8,6 +8,7 @@ import {
   openedFileSize,
   openedFileKey,
   OpenedFileRecord,
+  markOpenedFileChunkUploaded,
   putOpenedFile,
   readOpenedFileRange,
   removeOpenedFile,
@@ -21,6 +22,8 @@ import {
   getNextcloudFileMetadata,
   NEXTCLOUD_FILE_INFO_PROPFIND_BODY,
   OPEN_IN_WEB_ACTION,
+  NEXTCLOUD_UPLOAD_CHUNK_SIZE,
+  uploadNextcloudChunk,
   uploadNextcloudFile,
 } from './nextcloud_files';
 import Proxy from './proxy';
@@ -57,12 +60,15 @@ interface FileSystemProps {
 
 interface WritePerformanceMetrics {
   handlerTimeMs: number
+  chunkUploadMs: number
+  chunksUploaded: number
 }
 
 export default class WebDAVFS {
   #proxy: Proxy;
   #fileSystemMap: { [fileSystemId: string]: FileSystemProps } = {};
   #writePerformanceMetrics = new Map<string, WritePerformanceMetrics>();
+  #chunkUploadQueues = new Map<string, Promise<void>>();
   #readCaches = new Map<string, WebDAVReadCache>();
   #mountState: Promise<{
     fileSystems: chrome.fileSystemProvider.FileSystemInfo[]
@@ -280,6 +286,10 @@ export default class WebDAVFS {
       const fileSize = openedFileSize(openedFile);
       const uploadStartedAt = performance.now();
       if (server === 'nc') {
+        await this.#uploadReadyNextcloudChunks(fileSystemId, openRequestId);
+        const latestOpenedFile = await getOpenedFile(fileSystemId, openRequestId);
+        if (!latestOpenedFile)
+          throw new Error('Open file operation state is unavailable');
         const destinationPath = filePathConverter(filePath);
         const destination = buildNextcloudFileDestination(domain, username, filePath);
         await uploadNextcloudFile(
@@ -287,9 +297,23 @@ export default class WebDAVFS {
           uploadPathConverter(`/${uuid}`),
           destinationPath,
           destination,
-          fileSize,
+          openedFileSize(latestOpenedFile),
           (offset, length) =>
-            readOpenedFileRange(openedFile, offset, length)
+            readOpenedFileRange(latestOpenedFile, offset, length),
+          {
+            firstChunkIndex: latestOpenedFile.nextChunkToUpload || 0,
+            onChunksUploaded: ({ chunkCount, chunkUploadMs }) => {
+              console.info(
+                `Nextcloud chunks uploaded: chunks=${chunkCount}, ` +
+                `chunkUploadMs=${Math.round(chunkUploadMs)}`
+              );
+            },
+            onAssemblyComplete: assemblyMs => {
+              console.info(
+                `Nextcloud chunk assembly complete: assemblyMs=${Math.round(assemblyMs)}`
+              );
+            },
+          }
         );
       } else {
         const data = await readOpenedFileRange(openedFile, 0, fileSize);
@@ -302,6 +326,8 @@ export default class WebDAVFS {
         `Upload timing: bytes=${fileSize}, writeCalls=${openedFile.writeCalls || 0}, ` +
         `writeBytes=${openedFile.writeBytes || 0}, ` +
         `writeHandlerMs=${Math.round(metrics?.handlerTimeMs || 0)}, ` +
+        `writeChunkCount=${metrics?.chunksUploaded || 0}, ` +
+        `writeChunkUploadMs=${Math.round(metrics?.chunkUploadMs || 0)}, ` +
         `closeUploadMs=${Math.round(performance.now() - uploadStartedAt)}`
       );
     } else if (mode === 'READ') {
@@ -322,6 +348,7 @@ export default class WebDAVFS {
 
     await removeOpenedFile(fileSystemId, openRequestId);
     this.#writePerformanceMetrics.delete(openedFileKey(fileSystemId, openRequestId));
+    this.#chunkUploadQueues.delete(openedFileKey(fileSystemId, openRequestId));
     const readCache = this.#readCaches.get(openedFileKey(fileSystemId, openRequestId));
     readCache?.clear();
     this.#readCaches.delete(openedFileKey(fileSystemId, openRequestId));
@@ -375,14 +402,111 @@ export default class WebDAVFS {
     console.log(`WebDAVFS.onWriteFileRequested: openRequestId=${openRequestId}, filePath='${filePath}', offset=${offset}, data.byteLength=${data.byteLength}`);
 
     const startedAt = performance.now();
-    await stageOpenedFileWrite(fileSystemId, openRequestId, offset, data);
+    const { server } = this.#fileSystemMap[fileSystemId];
+    await stageOpenedFileWrite(
+      fileSystemId,
+      openRequestId,
+      offset,
+      data,
+      server === 'nc' ? NEXTCLOUD_UPLOAD_CHUNK_SIZE : undefined
+    );
     const key = openedFileKey(fileSystemId, openRequestId);
     const metrics = this.#writePerformanceMetrics.get(key) || {
       handlerTimeMs: 0,
+      chunkUploadMs: 0,
+      chunksUploaded: 0,
     };
-    metrics.handlerTimeMs += performance.now() - startedAt;
     this.#writePerformanceMetrics.set(key, metrics);
+    try {
+      if (server === 'nc')
+        await this.#uploadReadyNextcloudChunks(fileSystemId, openRequestId);
+    } finally {
+      metrics.handlerTimeMs += performance.now() - startedAt;
+    }
   }
+
+  #uploadReadyNextcloudChunks = async (
+    fileSystemId: string,
+    openRequestId: number
+  ): Promise<void> => {
+    const key = openedFileKey(fileSystemId, openRequestId);
+    const previous = this.#chunkUploadQueues.get(key) || Promise.resolve();
+    const current = previous.catch(() => {}).then(async () => {
+      const fileSystem = this.#fileSystemMap[fileSystemId];
+      if (!fileSystem || fileSystem.server !== 'nc')
+        throw new Error('Nextcloud upload filesystem is unavailable');
+      const { domain, username, client, uploadPathConverter } = fileSystem;
+
+      while (true) {
+        const record = await getOpenedFile(fileSystemId, openRequestId);
+        if (!record) throw new Error('Open file operation state is unavailable');
+        const size = openedFileSize(record);
+        const uploadedCount = record.nextChunkToUpload || 0;
+        const chunkVersions = record.chunkVersions || {};
+        const uploadedVersions = record.uploadedChunkVersions || {};
+        let chunkIndex = -1;
+
+        for (let index = 0; index < uploadedCount; index++) {
+          if ((chunkVersions[String(index)] || 0) >
+            (uploadedVersions[String(index)] || 0)) {
+            chunkIndex = index;
+            break;
+          }
+        }
+        if (chunkIndex < 0 && uploadedCount <
+          Math.floor(size / NEXTCLOUD_UPLOAD_CHUNK_SIZE))
+          chunkIndex = uploadedCount;
+        if (chunkIndex < 0) return;
+
+        const version = chunkVersions[String(chunkIndex)] || 0;
+        const offset = chunkIndex * NEXTCLOUD_UPLOAD_CHUNK_SIZE;
+        const data = await readOpenedFileRange(
+          record,
+          offset,
+          NEXTCLOUD_UPLOAD_CHUNK_SIZE
+        );
+        if (data.byteLength !== NEXTCLOUD_UPLOAD_CHUNK_SIZE)
+          throw new Error('A complete Nextcloud upload chunk is not available');
+
+        const destination = buildNextcloudFileDestination(
+          domain,
+          username,
+          record.filePath
+        );
+        const uploadStartedAt = performance.now();
+        await uploadNextcloudChunk(
+          client,
+          uploadPathConverter(`/${record.uuid}`),
+          chunkIndex,
+          destination,
+          data
+        );
+        const uploadTime = performance.now() - uploadStartedAt;
+        await markOpenedFileChunkUploaded(
+          fileSystemId,
+          openRequestId,
+          chunkIndex,
+          version
+        );
+
+        const metrics = this.#writePerformanceMetrics.get(key) || {
+          handlerTimeMs: 0,
+          chunkUploadMs: 0,
+          chunksUploaded: 0,
+        };
+        metrics.chunkUploadMs += uploadTime;
+        metrics.chunksUploaded++;
+        this.#writePerformanceMetrics.set(key, metrics);
+      }
+    });
+    this.#chunkUploadQueues.set(key, current);
+    try {
+      await current;
+    } finally {
+      if (this.#chunkUploadQueues.get(key) === current)
+        this.#chunkUploadQueues.delete(key);
+    }
+  };
 
   async onCreateDirectoryRequested(
     options: chrome.fileSystemProvider.CreateDirectoryRequestedOptions
