@@ -4,6 +4,8 @@ export const OPEN_IN_WEB_ACTION = 'open-in-web';
 export const NEXTCLOUD_UPLOAD_CHUNK_SIZE =
   DEFAULT_TRANSFER_SETTINGS.uploadChunkSize;
 export const NEXTCLOUD_MAX_UPLOAD_CHUNKS = 10000;
+export const NEXTCLOUD_PREVIEW_SIZE = 128;
+export const MAX_THUMBNAIL_DATA_URI_LENGTH = 32 * 1024;
 
 export const NEXTCLOUD_FILE_INFO_PROPFIND_BODY =
   '<?xml version="1.0" encoding="UTF-8"?>' +
@@ -110,6 +112,104 @@ interface NextcloudUploadClient {
       data?: ArrayBuffer
     }
   ): Promise<unknown>
+}
+
+interface NextcloudPreviewResponse {
+  ok: boolean
+  status: number
+  headers: { get(name: string): string | null }
+  arrayBuffer(): Promise<ArrayBuffer>
+}
+
+interface NextcloudPreviewClient {
+  customRequest(
+    path: string,
+    options: { method: string; url: string }
+  ): Promise<NextcloudPreviewResponse>
+}
+
+interface NextcloudFileInfoResponse {
+  text(): Promise<string>
+}
+
+interface NextcloudFileInfoClient {
+  customRequest(
+    path: string,
+    options: {
+      method: string
+      headers: Record<string, string>
+      data: string
+    }
+  ): Promise<NextcloudFileInfoResponse>
+}
+
+export function buildNextcloudPreviewUrl(origin: string, fileId: string): string {
+  const url = new URL('/index.php/core/preview', origin);
+  url.search = new URLSearchParams({
+    fileId,
+    x: String(NEXTCLOUD_PREVIEW_SIZE),
+    y: String(NEXTCLOUD_PREVIEW_SIZE),
+    a: 'true',
+    forceIcon: 'false',
+    mimeFallback: 'false',
+  }).toString();
+  return url.toString();
+}
+
+export async function fetchNextcloudThumbnail(
+  client: NextcloudPreviewClient,
+  fileId: string,
+  origin: string
+): Promise<string | undefined> {
+  const response = await client.customRequest('/', {
+    method: 'GET',
+    url: buildNextcloudPreviewUrl(origin, fileId),
+  });
+  if (!response.ok) {
+    console.warn(`Nextcloud preview request failed: HTTP ${response.status}`);
+    return undefined;
+  }
+
+  const mimeType = response.headers.get('content-type')
+    ?.split(';', 1)[0]
+    .trim()
+    .toLowerCase();
+  if (!mimeType || !['image/png', 'image/jpeg', 'image/webp'].includes(mimeType)) {
+    console.warn(`Nextcloud preview returned unsupported content type: ${mimeType || 'missing'}`);
+    return undefined;
+  }
+
+  const image = new Uint8Array(await response.arrayBuffer());
+
+  let binary = '';
+  for (let offset = 0; offset < image.length; offset += 0x8000) {
+    binary += String.fromCharCode(...image.subarray(offset, offset + 0x8000));
+  }
+  const dataUri = `data:${mimeType};base64,${btoa(binary)}`;
+  if (dataUri.length > MAX_THUMBNAIL_DATA_URI_LENGTH) {
+    console.warn(`Nextcloud preview exceeds Chrome's 32 KB data URI limit: ${dataUri.length} bytes`);
+    return undefined;
+  }
+  return dataUri;
+}
+
+export async function fetchNextcloudThumbnailForPath(
+  fileClient: NextcloudFileInfoClient,
+  previewClient: NextcloudPreviewClient,
+  filePath: string,
+  previewOrigin: string
+): Promise<string | undefined> {
+  const response = await fileClient.customRequest(filePath, {
+    method: 'PROPFIND',
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      Depth: '0',
+    },
+    data: NEXTCLOUD_FILE_INFO_PROPFIND_BODY,
+  });
+  const { fileId, isDirectory } = getNextcloudFileMetadata(await response.text());
+  if (isDirectory) return undefined;
+  return fetchNextcloudThumbnail(previewClient, fileId, previewOrigin);
 }
 
 export interface NextcloudUploadTimings {

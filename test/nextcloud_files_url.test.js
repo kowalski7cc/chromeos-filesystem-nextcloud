@@ -41,10 +41,13 @@ new Function('exports', 'require', 'module', compiled)(
 );
 const {
   buildNextcloudFileDestination,
+  buildNextcloudPreviewUrl,
   buildNextcloudFilesUrl,
   createNextcloudUploadFolder,
   getNextcloudUploadChunkCount,
   getNextcloudFileMetadata,
+  fetchNextcloudThumbnail,
+  fetchNextcloudThumbnailForPath,
   getOpenInWebActions,
   NEXTCLOUD_MAX_UPLOAD_CHUNKS,
   NEXTCLOUD_UPLOAD_CHUNK_SIZE,
@@ -53,6 +56,141 @@ const {
   uploadNextcloudChunk,
   uploadNextcloudFile,
 } = helperModule.exports;
+
+test('Nextcloud preview requests use a small file-ID preview without icon fallback', () => {
+  const previewUrl = new URL(
+    buildNextcloudPreviewUrl('https://cloud.example.com', '2671618')
+  );
+
+  assert.equal(previewUrl.pathname, '/index.php/core/preview');
+  assert.equal(previewUrl.searchParams.get('fileId'), '2671618');
+  assert.equal(previewUrl.searchParams.get('x'), '128');
+  assert.equal(previewUrl.searchParams.get('y'), '128');
+  assert.equal(previewUrl.searchParams.get('a'), 'true');
+  assert.equal(previewUrl.searchParams.get('forceIcon'), 'false');
+  assert.equal(previewUrl.searchParams.get('mimeFallback'), 'false');
+});
+
+test('Nextcloud thumbnails return supported image data URIs', async () => {
+  const requests = [];
+  const thumbnail = await fetchNextcloudThumbnail({
+    async customRequest(path, options) {
+      requests.push({ path, options });
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: () => 'image/jpeg; charset=binary' },
+        async arrayBuffer() {
+          return Uint8Array.from([0xff, 0xd8, 0xff]).buffer;
+        },
+      };
+    },
+  }, '2671618', 'https://cloud.example.com');
+
+  assert.equal(thumbnail, 'data:image/jpeg;base64,/9j/');
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].path, '/');
+  assert.equal(requests[0].options.method, 'GET');
+  const requestUrl = new URL(requests[0].options.url);
+  assert.equal(requestUrl.pathname, '/index.php/core/preview');
+  assert.equal(requestUrl.searchParams.get('fileId'), '2671618');
+});
+
+test('Nextcloud path thumbnails request the file ID and skip directories', async () => {
+  const fileInfoRequests = [];
+  const previewRequests = [];
+  const fileInfoClient = {
+    async customRequest(path, options) {
+      fileInfoRequests.push({ path, options });
+      return {
+        async text() {
+          return '<d:multistatus xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">' +
+            '<d:response><d:propstat><d:prop><oc:fileid>2671618</oc:fileid>' +
+            '<d:resourcetype/></d:prop></d:propstat></d:response></d:multistatus>';
+        },
+      };
+    },
+  };
+  const previewClient = {
+    async customRequest(path, options) {
+      previewRequests.push({ path, options });
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: () => 'image/webp' },
+        async arrayBuffer() {
+          return Uint8Array.from([1, 2, 3]).buffer;
+        },
+      };
+    },
+  };
+
+  assert.equal(
+    await fetchNextcloudThumbnailForPath(
+      fileInfoClient,
+      previewClient,
+      '/Photos/image.webp',
+      'https://cloud.example.com'
+    ),
+    'data:image/webp;base64,AQID'
+  );
+  assert.equal(fileInfoRequests[0].path, '/Photos/image.webp');
+  assert.equal(fileInfoRequests[0].options.method, 'PROPFIND');
+  assert.equal(previewRequests.length, 1);
+
+  fileInfoClient.customRequest = async () => ({
+    async text() {
+      return '<d:multistatus xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">' +
+        '<d:response><d:propstat><d:prop><oc:fileid>2671618</oc:fileid>' +
+        '<d:resourcetype><d:collection/></d:resourcetype></d:prop></d:propstat>' +
+        '</d:response></d:multistatus>';
+    },
+  });
+
+  assert.equal(
+    await fetchNextcloudThumbnailForPath(
+      fileInfoClient,
+      previewClient,
+      '/Photos',
+      'https://cloud.example.com'
+    ),
+    undefined
+  );
+  assert.equal(previewRequests.length, 1);
+});
+
+test('unavailable, unsupported, or oversized Nextcloud previews are omitted', async () => {
+  const createClient = ({ ok = true, mimeType = 'image/png', bytes = new Uint8Array([1]) } = {}) => ({
+    async customRequest() {
+      return {
+        ok,
+        status: ok ? 200 : 404,
+        headers: { get: () => mimeType },
+        async arrayBuffer() {
+          return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+        },
+      };
+    },
+  });
+
+  assert.equal(await fetchNextcloudThumbnail(createClient({ ok: false }), '1', 'https://cloud.example.com'), undefined);
+  assert.equal(await fetchNextcloudThumbnail(createClient({ mimeType: 'text/html' }), '1', 'https://cloud.example.com'), undefined);
+  const nearLimit = await fetchNextcloudThumbnail(
+    createClient({ bytes: new Uint8Array(24550) }),
+    '1',
+    'https://cloud.example.com'
+  );
+  assert.ok(nearLimit);
+  assert.ok(nearLimit.length <= 32 * 1024);
+  assert.equal(
+    await fetchNextcloudThumbnail(
+      createClient({ bytes: new Uint8Array(24559) }),
+      '1',
+      'https://cloud.example.com'
+    ),
+    undefined
+  );
+});
 
 test('the Open in web action is returned for one or more Nextcloud entries', () => {
   assert.deepEqual(getOpenInWebActions('nc', 1, 'Open in web'), [[

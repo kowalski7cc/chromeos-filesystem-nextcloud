@@ -21,6 +21,7 @@ import {
   getOpenInWebActions,
   getNextcloudFileMetadata,
   getNextcloudUploadChunkCount,
+  fetchNextcloudThumbnailForPath,
   NEXTCLOUD_FILE_INFO_PROPFIND_BODY,
   OPEN_IN_WEB_ACTION,
   uploadNextcloudChunk,
@@ -59,6 +60,7 @@ interface FileSystemProps {
   useHttps: boolean
   username: string
   client: Client
+  previewClient: Client
   metadataCache: MetadataCache
   filePathConverter: PathConverter
   uploadPathConverter: PathConverter
@@ -213,7 +215,7 @@ export default class WebDAVFS {
     options: chrome.fileSystemProvider.ReadDirectoryRequestedOptions
   ) {
     const { fileSystemId, directoryPath } = options;
-    console.log(`WebDAVFS.onReadDirectoryRequested: directoryPath=${directoryPath}`);
+    console.log(`WebDAVFS.onReadDirectoryRequested: directoryPath=${directoryPath}, thumbnail=${options.thumbnail}`);
     console.debug(options);
 
     const { client, metadataCache, filePathConverter } =
@@ -234,17 +236,35 @@ export default class WebDAVFS {
     console.log(`WebDAVFS.onGetMetadataRequested: entryPath=${entryPath}, thumbnail=${thumbnail}`);
     console.debug(options);
 
-    if (thumbnail) throw new Error('Thumbnail not supported');
-
-    const { client, metadataCache, filePathConverter } =
+    const {
+      domain, useHttps, client, previewClient, metadataCache, filePathConverter,
+    } =
       this.#fileSystemMap[fileSystemId];
     const cache = metadataCache.get(entryPath);
-    if (cache.metadata && cache.directoryExists && cache.fileExists)
-      return [canonicalizedMetadata(cache.metadata, options)];
+    let metadata: chrome.fileSystemProvider.EntryMetadata;
+    if (cache.metadata && cache.directoryExists && cache.fileExists) {
+      metadata = { ...cache.metadata };
+    } else {
+      const stat = await client.stat(filePathConverter(entryPath));
+      console.debug(stat);
+      metadata = fromStat(stat);
+    }
 
-    const stat = await client.stat(filePathConverter(entryPath));
-    console.debug(stat);
-    return [canonicalizedMetadata(fromStat(stat), options)];
+    if (thumbnail && !metadata.isDirectory) {
+      try {
+        const preview = await fetchNextcloudThumbnailForPath(
+          client,
+          previewClient,
+          filePathConverter(entryPath),
+          `${useHttps ? 'https' : 'http'}://${domain}`
+        );
+        if (preview) metadata.thumbnail = preview;
+      } catch (error) {
+        console.warn('Thumbnail request failed', { entryPath, error });
+      }
+    }
+
+    return [canonicalizedMetadata(metadata, options)];
   }
 
   async onOpenFileRequested(
@@ -720,6 +740,10 @@ export default class WebDAVFS {
 
     const url = `${useHttps ? 'https' : 'http'}://${domain}/remote.php/dav/`;
     const client = createClient(url, { username, password });
+    const previewClient = createClient(
+      `${useHttps ? 'https' : 'http'}://${domain}/`,
+      { username, password }
+    );
     const metadataCache = new MetadataCache();
     const filePathConverter: PathConverter =
       path => `/files/${username}${path}`;
@@ -727,7 +751,7 @@ export default class WebDAVFS {
       path => `/uploads/${username}${path}`;
 
     return {
-      server, domain, useHttps, username, client, metadataCache, filePathConverter,
+      server, domain, useHttps, username, client, previewClient, metadataCache, filePathConverter,
       uploadPathConverter,
     };
   };
