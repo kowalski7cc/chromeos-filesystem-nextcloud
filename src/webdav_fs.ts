@@ -25,6 +25,10 @@ import {
 } from './nextcloud_files';
 import Proxy from './proxy';
 import { getWebDAVFileSystemErrorCode } from './webdav_errors';
+import {
+  fetchWebDAVRange,
+  WebDAVReadCache,
+} from './webdav_read_cache';
 
 type ServerType = 'nc' | 'oc'; // Nextcloud/ownCloud
 type PathConverter = (path: string) => string;
@@ -59,6 +63,7 @@ export default class WebDAVFS {
   #proxy: Proxy;
   #fileSystemMap: { [fileSystemId: string]: FileSystemProps } = {};
   #writePerformanceMetrics = new Map<string, WritePerformanceMetrics>();
+  #readCaches = new Map<string, WebDAVReadCache>();
   #mountState: Promise<{
     fileSystems: chrome.fileSystemProvider.FileSystemInfo[]
     mountedCredentials: Credential[]
@@ -242,6 +247,8 @@ export default class WebDAVFS {
       const destination = buildNextcloudFileDestination(domain, username, filePath);
       await createNextcloudUploadFolder(client, uploadPath, destination);
     }
+    if (mode === 'READ')
+      this.#readCaches.set(openedFileKey(fileSystemId, requestId), new WebDAVReadCache());
 
     await putOpenedFile({
       key: openedFileKey(fileSystemId, requestId),
@@ -297,10 +304,25 @@ export default class WebDAVFS {
         `writeHandlerMs=${Math.round(metrics?.handlerTimeMs || 0)}, ` +
         `closeUploadMs=${Math.round(performance.now() - uploadStartedAt)}`
       );
+    } else if (mode === 'READ') {
+      const readCache = this.#readCaches.get(openedFileKey(fileSystemId, openRequestId));
+      if (readCache) {
+        const {
+          requestCount, bytesFetched, bytesReturned, cacheHits, networkTimeMs,
+        } = readCache.metrics;
+        console.info(
+          `Download timing: requests=${requestCount}, bytesFetched=${bytesFetched}, ` +
+          `bytesReturned=${bytesReturned}, cacheHits=${cacheHits}, ` +
+          `networkTimeMs=${Math.round(networkTimeMs)}`
+        );
+      }
     }
 
     await removeOpenedFile(fileSystemId, openRequestId);
     this.#writePerformanceMetrics.delete(openedFileKey(fileSystemId, openRequestId));
+    const readCache = this.#readCaches.get(openedFileKey(fileSystemId, openRequestId));
+    readCache?.clear();
+    this.#readCaches.delete(openedFileKey(fileSystemId, openRequestId));
   }
 
   async onReadFileRequested(
@@ -319,15 +341,22 @@ export default class WebDAVFS {
 
     const credential = [url.username, url.password].map(decodeURIComponent).join(':');
 
-    const headers = new Headers();
-    headers.set('Authorization', `Basic ${btoa(credential)}`);
-    // HTTP range requests
-    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests
-    headers.set('Range', `bytes=${offset}-${offset + length - 1}`);
-
-    const response = await fetch(url_, { headers });
-    console.log(`WebDAVFS.onReadFileRequested: Content-Range: ${response.headers.get('Content-Range')}`);
-    const buffer = await response.arrayBuffer();
+    const cacheKey = openedFileKey(fileSystemId, openRequestId);
+    let readCache = this.#readCaches.get(cacheKey);
+    if (!readCache) {
+      readCache = new WebDAVReadCache();
+      this.#readCaches.set(cacheKey, readCache);
+    }
+    const buffer = await readCache.read(
+      offset,
+      length,
+      (rangeOffset, rangeLength) => fetchWebDAVRange(
+        url_,
+        `Basic ${btoa(credential)}`,
+        rangeOffset,
+        rangeLength
+      )
+    );
     const hasMore = false;
     return [buffer, hasMore];
   }

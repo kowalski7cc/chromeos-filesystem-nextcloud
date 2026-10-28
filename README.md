@@ -31,11 +31,18 @@ The final chunk may be smaller; Nextcloud's 10,000-chunk limit is enforced.
 Empty files are sent with a direct PUT. A close request completes after the
 upload has been assembled on the server.
 
+Downloads use HTTP range read-ahead: small and sequential reads are served from
+16 MiB ranges held in a 64 MiB process-wide LRU cache. Concurrent reads for the
+same range of an open file share one request. Larger individual reads fetch
+only the requested range. Range responses are checked before being returned.
+
 The extension logs an `Upload timing` summary after a successful write close.
 It reports file size, write count/bytes, cumulative write-handler time observed
 in the current service-worker lifetime, and close-time upload duration. The
 write count and bytes persist across worker restarts; the handler-time total
 does not.
+Successful read closes log a `Download timing` summary with range request
+count, fetched/returned bytes, cache hits, and cumulative range-request time.
 
 ownCloud writes continue to use a direct WebDAV PUT. Nextcloud's
 [bulk-upload API](https://docs.nextcloud.com/server/35/developer_manual/client_apis/WebDAV/bulkupload.html)
