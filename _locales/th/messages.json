@@ -64,7 +64,10 @@
     "message": "โดเมนเซิร์ฟเวอร์"
   },
   "invalidServerDomain": {
-    "message": "ป้อนที่อยู่เซิร์ฟเวอร์ HTTPS ที่ถูกต้อง เช่น cloud.example.com"
+    "message": "ป้อนที่อยู่เซิร์ฟเวอร์ที่ถูกต้อง เช่น cloud.example.com"
+  },
+  "useHttpsForConnection": {
+    "message": "ใช้ HTTPS สำหรับการเชื่อมต่อ"
   },
   "connectionFailed": {
     "message": "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ โปรดตรวจสอบที่อยู่แล้วลองอีกครั้ง"

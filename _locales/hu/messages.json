@@ -84,7 +84,10 @@
     "description": "Label for the server domain field"
   },
   "invalidServerDomain": {
-    "message": "Adjon meg egy érvényes HTTPS-kiszolgálócímet, például: cloud.example.com."
+    "message": "Adjon meg egy érvényes kiszolgálócímet, például: cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "HTTPS használata a kapcsolathoz"
   },
   "connectionFailed": {
     "message": "Nem sikerült csatlakozni a kiszolgálóhoz. Ellenőrizze a címet, majd próbálja újra."

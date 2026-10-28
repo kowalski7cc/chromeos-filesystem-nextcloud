@@ -84,7 +84,10 @@
     "description": "Label for the server domain field"
   },
   "invalidServerDomain": {
-    "message": "Zadejte platnou adresu serveru HTTPS, například cloud.example.com."
+    "message": "Zadejte platnou adresu serveru, například cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "Použít pro připojení HTTPS"
   },
   "connectionFailed": {
     "message": "K serveru se nepodařilo připojit. Zkontrolujte adresu a zkuste to znovu."

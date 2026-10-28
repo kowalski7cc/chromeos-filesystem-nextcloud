@@ -64,7 +64,10 @@
     "message": "Domínio do servidor"
   },
   "invalidServerDomain": {
-    "message": "Insira um endereço HTTPS válido, como cloud.example.com."
+    "message": "Insira um endereço de servidor válido, como cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "Usar HTTPS para a conexão"
   },
   "connectionFailed": {
     "message": "Não foi possível conectar ao servidor. Verifique o endereço e tente novamente."

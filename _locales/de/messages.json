@@ -84,7 +84,10 @@
     "description": "Label for the server domain field"
   },
   "invalidServerDomain": {
-    "message": "Geben Sie eine gültige HTTPS-Serveradresse ein, z. B. cloud.example.com."
+    "message": "Geben Sie eine gültige Serveradresse ein, z. B. cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "HTTPS für die Verbindung verwenden"
   },
   "connectionFailed": {
     "message": "Verbindung zum Server nicht möglich. Prüfen Sie die Adresse und versuchen Sie es erneut."

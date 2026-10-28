@@ -64,7 +64,10 @@
     "message": "Domena serwera"
   },
   "invalidServerDomain": {
-    "message": "Wpisz prawidłowy adres serwera HTTPS, np. cloud.example.com."
+    "message": "Wpisz prawidłowy adres serwera, np. cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "Używaj HTTPS do połączenia"
   },
   "connectionFailed": {
     "message": "Nie można połączyć się z serwerem. Sprawdź adres i spróbuj ponownie."

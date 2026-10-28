@@ -64,7 +64,10 @@
     "message": "सर्वर डोमेन"
   },
   "invalidServerDomain": {
-    "message": "cloud.example.com जैसे मान्य HTTPS सर्वर पते का उपयोग करें।"
+    "message": "cloud.example.com जैसे मान्य सर्वर पते का उपयोग करें।"
+  },
+  "useHttpsForConnection": {
+    "message": "कनेक्शन के लिए HTTPS का उपयोग करें"
   },
   "connectionFailed": {
     "message": "सर्वर से कनेक्ट नहीं हो सका। पता जाँचें और फिर कोशिश करें।"

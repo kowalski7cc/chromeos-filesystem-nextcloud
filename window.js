@@ -23,13 +23,14 @@ function parseInstanceNameFromCapabilities(data) {
   return trimmed || null;
 }
 
-function normalizeServerDomain(value) {
+function normalizeServerDomain(value, useHttps = true) {
   const trimmed = value.trim();
   if (!trimmed) return null;
 
   try {
-    const url = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`);
-    if (url.protocol !== 'https:' || !url.hostname || url.username || url.password ||
+    const protocol = useHttps ? 'https:' : 'http:';
+    const url = new URL(trimmed.includes('://') ? trimmed : `${protocol}//${trimmed}`);
+    if (url.protocol !== protocol || !url.hostname || url.username || url.password ||
         url.pathname !== '/' || url.search || url.hash) {
       return null;
     }
@@ -39,8 +40,8 @@ function normalizeServerDomain(value) {
   }
 }
 
-async function fetchDefaultInstanceName(domain) {
-  const url = `https://${domain}/ocs/v2.php/cloud/capabilities?format=json`;
+async function fetchDefaultInstanceName(domain, useHttps = true) {
+  const url = `${useHttps ? 'https' : 'http'}://${domain}/ocs/v2.php/cloud/capabilities?format=json`;
 
   try {
     const response = await fetch(url, {
@@ -75,6 +76,7 @@ function applyLocale() {
   const usernameLabel = document.querySelector('label[for="username"]');
   const passwordLabel = document.querySelector('label[for="password"]');
   const useInstanceNameLabel = document.querySelector('.advanced-toggle-label');
+  const useHttpsLabel = document.querySelector('#useHttpsLabel');
   const advancedSummary = document.querySelector('#advancedSettings summary');
   const summary = document.querySelector('#expander summary');
   const title = document.querySelector('h1');
@@ -86,6 +88,7 @@ function applyLocale() {
   if (nameLabel) nameLabel.textContent = i18n('nameLabel');
   if (domainLabel) domainLabel.textContent = i18n('serverDomain');
   if (useInstanceNameLabel) useInstanceNameLabel.textContent = i18n('useNameFromNextcloudInstance');
+  if (useHttpsLabel) useHttpsLabel.textContent = i18n('useHttpsForConnection');
   if (advancedSummary) advancedSummary.textContent = i18n('advancedSettings');
   if (summary) summary.textContent = i18n('useUsernamePassword');
   if (usernameLabel) usernameLabel.textContent = i18n('username');
@@ -95,16 +98,17 @@ function applyLocale() {
 }
 
 // modify User-Agent
-async function registerProxy(host) {
-  await browser.runtime.sendMessage(['registerProxy', { host }]);
+async function registerProxy(host, useHttps) {
+  await browser.runtime.sendMessage(['registerProxy', { host, useHttps }]);
 }
 
-async function ncLoginFlow(domain) {
-  await registerProxy(domain);
+async function ncLoginFlow(domain, useHttps) {
+  const protocol = useHttps ? 'https' : 'http';
+  await registerProxy(domain, useHttps);
 
   // Nextcloud Login flow v2
   // https://docs.nextcloud.com/server/latest/developer_manual/client_apis/LoginFlow/index.html#login-flow-v2
-  const url = `https://${domain}/index.php/login/v2`;
+  const url = `${protocol}://${domain}/index.php/login/v2`;
   const response = await fetch(url, { method: 'POST' });
   const { poll: { token, endpoint }, login } = await response.json();
 
@@ -129,6 +133,7 @@ applyLocale();
 
 const nameInput = document.querySelector('#name');
 const useInstanceNameInput = document.querySelector('#useInstanceName');
+const useHttpsInput = document.querySelector('#useHttps');
 const nameOverrideRow = document.querySelector('#nameOverrideRow');
 
 function syncAdvancedNameControls() {
@@ -165,7 +170,8 @@ document.querySelector('#btnOk').addEventListener('click', async ev => {
   const btnOk = ev.currentTarget || ev.target;
   const domainInput = document.querySelector('#domain');
   const message = document.querySelector('#message');
-  const domain = normalizeServerDomain(domainInput.value);
+  const useHttps = !useHttpsInput || useHttpsInput.checked;
+  const domain = normalizeServerDomain(domainInput.value, useHttps);
   if (!domain) {
     domainInput.setCustomValidity(i18n('invalidServerDomain'));
     message.textContent = i18n('invalidServerDomain');
@@ -179,7 +185,7 @@ document.querySelector('#btnOk').addEventListener('click', async ev => {
   message.textContent = '';
   try {
     const granted = await browser.permissions.request({
-      origins: [`https://${domain}/*`]
+      origins: [`${useHttps ? 'https' : 'http'}://${domain}/*`]
     });
     if (!granted) {
       message.textContent = i18n('connectionFailed');
@@ -190,7 +196,7 @@ document.querySelector('#btnOk').addEventListener('click', async ev => {
     const password = document.querySelector('#password').value;
     let resolvedName = nameInput.value || 'Nextcloud';
     if (useInstanceNameInput && useInstanceNameInput.checked) {
-      const defaultName = await fetchDefaultInstanceName(domain);
+      const defaultName = await fetchDefaultInstanceName(domain, useHttps);
       resolvedName = defaultName || 'Nextcloud';
       nameInput.value = resolvedName;
       if (!defaultName) message.textContent = i18n('instanceNameUnavailable');
@@ -200,13 +206,14 @@ document.querySelector('#btnOk').addEventListener('click', async ev => {
       server: 'oc',
       name: resolvedName,
       domain,
+      useHttps,
       username,
       password,
     };
 
     const details = document.querySelector('#expander');
     if (!details.open) {
-      Object.assign(request, await ncLoginFlow(domain));
+      Object.assign(request, await ncLoginFlow(domain, useHttps));
     }
 
     if (!message.textContent) message.textContent = i18n('mounting');

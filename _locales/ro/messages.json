@@ -64,7 +64,10 @@
     "message": "Domeniul serverului"
   },
   "invalidServerDomain": {
-    "message": "Introdu o adresă HTTPS validă, de exemplu cloud.example.com."
+    "message": "Introdu o adresă validă de server, de exemplu cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "Folosește HTTPS pentru conexiune"
   },
   "connectionFailed": {
     "message": "Conectarea la server a eșuat. Verifică adresa și încearcă din nou."

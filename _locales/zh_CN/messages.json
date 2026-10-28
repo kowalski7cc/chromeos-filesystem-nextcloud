@@ -84,7 +84,10 @@
     "description": "Label for the server domain field"
   },
   "invalidServerDomain": {
-    "message": "请输入有效的 HTTPS 服务器地址，例如 cloud.example.com。"
+    "message": "请输入有效的服务器地址，例如 cloud.example.com。"
+  },
+  "useHttpsForConnection": {
+    "message": "使用 HTTPS 连接"
   },
   "connectionFailed": {
     "message": "无法连接到服务器。请检查地址后重试。"

@@ -84,7 +84,10 @@
     "description": "Label for the server domain field"
   },
   "invalidServerDomain": {
-    "message": "cloud.example.com のような有効な HTTPS サーバーアドレスを入力してください。"
+    "message": "cloud.example.com のような有効なサーバーアドレスを入力してください。"
+  },
+  "useHttpsForConnection": {
+    "message": "接続に HTTPS を使用する"
   },
   "connectionFailed": {
     "message": "サーバーに接続できません。アドレスを確認して再試行してください。"

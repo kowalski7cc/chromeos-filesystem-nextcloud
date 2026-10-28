@@ -22,6 +22,8 @@ function loadWindowScript(options = {}) {
     message: { ...eventHandlers('message'), textContent: '', innerText: '' },
     expander: { ...eventHandlers('expander'), open: false },
     useInstanceName: { ...eventHandlers('useInstanceName'), checked: true },
+    useHttps: { ...eventHandlers('useHttps'), checked: options.useHttps ?? true },
+    useHttpsLabel: { textContent: '' },
     nameOverrideRow: { hidden: false },
     advancedSummary: { textContent: '' },
     nameLabel: { textContent: '' },
@@ -36,7 +38,9 @@ function loadWindowScript(options = {}) {
     console: options.console || console,
     URL,
     URLSearchParams,
-    setInterval() { return 1; },
+    setInterval(callback) {
+      return options.setInterval ? options.setInterval(callback) : 1;
+    },
     clearInterval() {},
     module: { exports: {} },
     document: {
@@ -52,6 +56,8 @@ function loadWindowScript(options = {}) {
           '#message': elements.message,
           '#expander': elements.expander,
           '#useInstanceName': elements.useInstanceName,
+          '#useHttps': elements.useHttps,
+          '#useHttpsLabel': elements.useHttpsLabel,
           '#nameOverrideRow': elements.nameOverrideRow,
           '#advancedSettings summary': elements.advancedSummary,
           'label[for="name"]': elements.nameLabel,
@@ -115,14 +121,99 @@ test('the instance name parser accepts a valid theming payload and rejects inval
   }), null);
 });
 
-test('server domain normalization rejects values that cannot form HTTPS permission origins', () => {
+test('server domain normalization enforces the selected protocol and rejects invalid origins', () => {
   const { normalizeServerDomain } = loadWindowScript();
 
   assert.equal(normalizeServerDomain('cloud.example.com'), 'cloud.example.com');
   assert.equal(normalizeServerDomain('https://cloud.example.com'), 'cloud.example.com');
+  assert.equal(normalizeServerDomain('cloud.example.com', false), 'cloud.example.com');
+  assert.equal(normalizeServerDomain('http://cloud.example.com', false), 'cloud.example.com');
   assert.equal(normalizeServerDomain('https://'), null);
   assert.equal(normalizeServerDomain('https://cloud.example.com/path'), null);
   assert.equal(normalizeServerDomain('http://cloud.example.com'), null);
+  assert.equal(normalizeServerDomain('https://cloud.example.com', false), null);
+});
+
+test('HTTPS defaults on and the HTTP choice reaches the connection and mount request', async () => {
+  const permissionRequests = [];
+  const sentMessages = [];
+  const fetchedUrls = [];
+  const { elements, listeners } = loadWindowScript({
+    permissionRequest: async request => {
+      permissionRequests.push(request);
+      return true;
+    },
+    sendMessage: async message => sentMessages.push(message),
+    fetchImplementation: async url => {
+      fetchedUrls.push(url);
+      return {
+        ok: true,
+        json: async () => ({
+          ocs: {
+            meta: { status: 'ok' },
+            data: { capabilities: { theming: { name: 'Example Cloud' } } },
+          },
+        }),
+      };
+    },
+  });
+  elements.expander.open = true;
+  assert.equal(elements.useHttps.checked, true);
+  elements.useHttps.checked = false;
+
+  await listeners.get('button:click')({ target: elements.button });
+
+  assert.equal(permissionRequests[0].origins[0], 'http://cloud.example.com/*');
+  assert.equal(
+    fetchedUrls[0],
+    'http://cloud.example.com/ocs/v2.php/cloud/capabilities?format=json'
+  );
+  assert.equal(sentMessages[0][0], 'mount');
+  assert.equal(sentMessages[0][1].useHttps, false);
+});
+
+test('connection dialog enables HTTPS by default in its markup', () => {
+  const markup = fs.readFileSync(path.join(__dirname, '../window.html'), 'utf8');
+
+  assert.match(markup, /<input id="useHttps" type="checkbox" role="switch" checked>/);
+});
+
+test('HTTP Login Flow uses HTTP endpoints and registers the matching proxy rule', async () => {
+  const fetchedUrls = [];
+  const sentMessages = [];
+  const { elements, listeners } = loadWindowScript({
+    setInterval: callback => {
+      queueMicrotask(callback);
+      return 1;
+    },
+    sendMessage: async message => sentMessages.push(message),
+    fetchImplementation: async url => {
+      fetchedUrls.push(url);
+      if (fetchedUrls.length === 1) {
+        return {
+          json: async () => ({
+            poll: { token: 'token', endpoint: 'http://cloud.example.com/poll' },
+            login: 'http://cloud.example.com/login',
+          }),
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({ loginName: 'user', appPassword: 'password' }),
+      };
+    },
+  });
+  elements.useHttps.checked = false;
+  elements.useInstanceName.checked = false;
+
+  await listeners.get('button:click')({ target: elements.button });
+
+  assert.equal(fetchedUrls[0], 'http://cloud.example.com/index.php/login/v2');
+  assert.equal(fetchedUrls[1], 'http://cloud.example.com/poll');
+  assert.equal(sentMessages[0][0], 'registerProxy');
+  assert.equal(sentMessages[0][1].useHttps, false);
+  assert.equal(sentMessages[1][0], 'mount');
+  assert.equal(sentMessages[1][1].useHttps, false);
 });
 
 test('invalid server domains show a dialog message without requesting permissions', async () => {

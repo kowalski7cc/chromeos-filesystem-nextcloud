@@ -64,7 +64,10 @@
     "message": "Τομέας διακομιστή"
   },
   "invalidServerDomain": {
-    "message": "Εισαγάγετε μια έγκυρη διεύθυνση διακομιστή HTTPS, όπως cloud.example.com."
+    "message": "Εισαγάγετε μια έγκυρη διεύθυνση διακομιστή, όπως cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "Χρήση HTTPS για τη σύνδεση"
   },
   "connectionFailed": {
     "message": "Δεν ήταν δυνατή η σύνδεση με τον διακομιστή. Ελέγξτε τη διεύθυνση και δοκιμάστε ξανά."

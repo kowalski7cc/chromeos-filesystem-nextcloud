@@ -84,7 +84,10 @@
     "description": "Label for the server domain field"
   },
   "invalidServerDomain": {
-    "message": "Введіть дійсну HTTPS-адресу сервера, наприклад cloud.example.com."
+    "message": "Введіть дійсну адресу сервера, наприклад cloud.example.com."
+  },
+  "useHttpsForConnection": {
+    "message": "Використовувати HTTPS для з'єднання"
   },
   "connectionFailed": {
     "message": "Не вдалося підключитися до сервера. Перевірте адресу й повторіть спробу."
