@@ -94,5 +94,21 @@
   "openInWeb": {
     "message": "在网页中打开",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-  }
+    },
+    "settingsTitle": { "message": "传输性能设置" },
+    "settingsDescription": { "message": "这些全局设置适用于所有已挂载的服务器。更改会应用于之后打开的文件。" },
+    "uploadChunkSize": { "message": "上传分块大小" },
+    "uploadChunkSizeHint": { "message": "Nextcloud 要求分块至少为 5 MiB。允许范围：5–100 MiB。" },
+    "downloadReadAheadSize": { "message": "下载预读大小" },
+    "downloadReadAheadSizeHint": { "message": "每个预读范围获取的字节数。允许范围：1–64 MiB。" },
+    "downloadCacheLimitLabel": { "message": "下载缓存上限" },
+    "downloadCacheSizeHint": { "message": "缓存范围占用的最大内存；必须至少能容纳一个预读范围。" },
+    "sequentialPrefetch": { "message": "顺序下载预取" },
+    "sequentialPrefetchHint": { "message": "顺序读取时获取下一个范围。" },
+    "resetSettings": { "message": "恢复默认值" },
+    "saveSettings": { "message": "保存设置" },
+    "settingsSaved": { "message": "设置已保存。" },
+    "settingsReset": { "message": "已恢复默认值。" },
+    "settingsLoadError": { "message": "无法加载设置。请检查扩展程序存储并重新加载此页面。" },
+    "settingsSaveError": { "message": "无法保存设置。请检查数值后重试。" }
 }

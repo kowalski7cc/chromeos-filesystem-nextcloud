@@ -94,5 +94,21 @@
   "openInWeb": {
     "message": "Im Web öffnen",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-  }
+    },
+    "settingsTitle": { "message": "Einstellungen für die Übertragungsleistung" },
+    "settingsDescription": { "message": "Diese globalen Einstellungen gelten für alle eingebundenen Server. Änderungen gelten für neu geöffnete Dateien." },
+    "uploadChunkSize": { "message": "Größe der Upload-Abschnitte" },
+    "uploadChunkSizeHint": { "message": "Nextcloud erfordert Abschnitte von mindestens 5 MiB. Zulässig: 5–100 MiB." },
+    "downloadReadAheadSize": { "message": "Vorladegröße für Downloads" },
+    "downloadReadAheadSizeHint": { "message": "Pro Vorladebereich gelesene Bytes. Zulässig: 1–64 MiB." },
+    "downloadCacheLimitLabel": { "message": "Download-Cache-Limit" },
+    "downloadCacheSizeHint": { "message": "Maximaler Speicher für zwischengespeicherte Bereiche; mindestens so groß wie ein Vorladebereich." },
+    "sequentialPrefetch": { "message": "Sequenzielles Vorladen" },
+    "sequentialPrefetchHint": { "message": "Beim sequenziellen Lesen den nächsten Bereich laden." },
+    "resetSettings": { "message": "Standards wiederherstellen" },
+    "saveSettings": { "message": "Einstellungen speichern" },
+    "settingsSaved": { "message": "Einstellungen gespeichert." },
+    "settingsReset": { "message": "Standardeinstellungen wiederhergestellt." },
+    "settingsLoadError": { "message": "Einstellungen konnten nicht geladen werden. Prüfen Sie den Erweiterungsspeicher und laden Sie die Seite neu." },
+    "settingsSaveError": { "message": "Einstellungen konnten nicht gespeichert werden. Prüfen Sie die Werte und versuchen Sie es erneut." }
 }

@@ -2,7 +2,10 @@ const path = require('path');
 
 module.exports = {
   mode: 'development',
-  entry: './src/background.ts',
+  entry: {
+    background: './src/background.ts',
+    options: './src/options.ts',
+  },
   devtool: 'inline-source-map',
   module: {
     rules: [
@@ -17,7 +20,7 @@ module.exports = {
     extensions: ['.ts', '.js'],
   },
   output: {
-    filename: 'background.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
   },
 };

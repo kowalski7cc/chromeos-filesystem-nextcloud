@@ -94,5 +94,21 @@
   "openInWeb": {
     "message": "Abrir en la web",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-  }
+    },
+    "settingsTitle": { "message": "Ajustes de rendimiento de transferencia" },
+    "settingsDescription": { "message": "Estos ajustes globales se aplican a todos los servidores montados. Los cambios afectan a los archivos que se abran después." },
+    "uploadChunkSize": { "message": "Tamaño de fragmento de subida" },
+    "uploadChunkSizeHint": { "message": "Nextcloud requiere fragmentos de al menos 5 MiB. Permitido: 5–100 MiB." },
+    "downloadReadAheadSize": { "message": "Tamaño de lectura anticipada" },
+    "downloadReadAheadSizeHint": { "message": "Bytes solicitados por rango de lectura anticipada. Permitido: 1–64 MiB." },
+    "downloadCacheLimitLabel": { "message": "Límite de caché de descarga" },
+    "downloadCacheSizeHint": { "message": "Memoria máxima para rangos almacenados; debe ser al menos igual a un rango de lectura anticipada." },
+    "sequentialPrefetch": { "message": "Precarga secuencial de descargas" },
+    "sequentialPrefetchHint": { "message": "Solicitar el siguiente rango cuando las lecturas sean secuenciales." },
+    "resetSettings": { "message": "Restaurar valores predeterminados" },
+    "saveSettings": { "message": "Guardar ajustes" },
+    "settingsSaved": { "message": "Ajustes guardados." },
+    "settingsReset": { "message": "Se restauraron los valores predeterminados." },
+    "settingsLoadError": { "message": "No se pudieron cargar los ajustes. Comprueba el almacenamiento de la extensión y vuelve a cargar la página." },
+    "settingsSaveError": { "message": "No se pudieron guardar los ajustes. Comprueba los valores e inténtalo de nuevo." }
 }

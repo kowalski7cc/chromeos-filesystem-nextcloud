@@ -94,5 +94,21 @@
   "openInWeb": {
     "message": "Otevřít na webu",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-  }
+    },
+    "settingsTitle": { "message": "Nastavení výkonu přenosu" },
+    "settingsDescription": { "message": "Tato globální nastavení platí pro všechna připojená úložiště. Změny se projeví u nově otevřených souborů." },
+    "uploadChunkSize": { "message": "Velikost části nahrávání" },
+    "uploadChunkSizeHint": { "message": "Nextcloud vyžaduje části o velikosti alespoň 5 MiB. Povolený rozsah: 5–100 MiB." },
+    "downloadReadAheadSize": { "message": "Velikost přednačítání stahování" },
+    "downloadReadAheadSizeHint": { "message": "Počet bajtů načtených v jednom rozsahu. Povolený rozsah: 1–64 MiB." },
+    "downloadCacheLimitLabel": { "message": "Limit mezipaměti stahování" },
+    "downloadCacheSizeHint": { "message": "Maximální paměť pro uložené rozsahy; musí být alespoň tak velká jako jeden rozsah přednačítání." },
+    "sequentialPrefetch": { "message": "Sekvenční přednačítání stahování" },
+    "sequentialPrefetchHint": { "message": "Při sekvenčním čtení načíst také následující rozsah." },
+    "resetSettings": { "message": "Obnovit výchozí" },
+    "saveSettings": { "message": "Uložit nastavení" },
+    "settingsSaved": { "message": "Nastavení bylo uloženo." },
+    "settingsReset": { "message": "Výchozí nastavení bylo obnoveno." },
+    "settingsLoadError": { "message": "Nastavení se nepodařilo načíst. Zkontrolujte úložiště rozšíření a stránku znovu načtěte." },
+    "settingsSaveError": { "message": "Nastavení se nepodařilo uložit. Zkontrolujte hodnoty a zkuste to znovu." }
 }

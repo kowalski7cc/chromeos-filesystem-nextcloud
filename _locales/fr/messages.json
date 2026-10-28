@@ -94,5 +94,21 @@
   "openInWeb": {
     "message": "Ouvrir sur le Web",
     "description": "Context-menu action to open a file or directory in Nextcloud Files"
-  }
+    },
+    "settingsTitle": { "message": "Paramètres de performances des transferts" },
+    "settingsDescription": { "message": "Ces paramètres globaux s'appliquent à tous les serveurs montés. Les modifications concernent les nouveaux fichiers ouverts." },
+    "uploadChunkSize": { "message": "Taille des segments d'envoi" },
+    "uploadChunkSizeHint": { "message": "Nextcloud exige des segments d'au moins 5 Mio. Valeurs autorisées : 5 à 100 Mio." },
+    "downloadReadAheadSize": { "message": "Taille de prélecture des téléchargements" },
+    "downloadReadAheadSizeHint": { "message": "Octets récupérés par plage de prélecture. Valeurs autorisées : 1 à 64 Mio." },
+    "downloadCacheLimitLabel": { "message": "Limite du cache de téléchargement" },
+    "downloadCacheSizeHint": { "message": "Mémoire maximale conservée pour les plages en cache ; au moins la taille d'une plage de prélecture." },
+    "sequentialPrefetch": { "message": "Prélecture séquentielle des téléchargements" },
+    "sequentialPrefetchHint": { "message": "Récupérer la plage suivante lors de lectures séquentielles." },
+    "resetSettings": { "message": "Rétablir les valeurs par défaut" },
+    "saveSettings": { "message": "Enregistrer les paramètres" },
+    "settingsSaved": { "message": "Paramètres enregistrés." },
+    "settingsReset": { "message": "Valeurs par défaut rétablies." },
+    "settingsLoadError": { "message": "Impossible de charger les paramètres. Vérifiez le stockage de l'extension et rechargez cette page." },
+    "settingsSaveError": { "message": "Impossible d'enregistrer les paramètres. Vérifiez les valeurs et réessayez." }
 }
