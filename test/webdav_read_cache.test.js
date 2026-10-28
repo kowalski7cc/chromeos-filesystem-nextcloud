@@ -41,12 +41,25 @@ test('sequential small reads share prefetched range data', async () => {
   const second = await cache.read(104, 4, fetchRange);
   assert.deepEqual(Array.from(new Uint8Array(first)), [100, 101, 102, 103]);
   assert.deepEqual(Array.from(new Uint8Array(second)), [104, 105, 106, 107]);
-  assert.deepEqual(requests, [{ offset: 0, length: WEBDAV_READ_AHEAD_SIZE }]);
+  assert.deepEqual(requests, [
+    { offset: 0, length: WEBDAV_READ_AHEAD_SIZE },
+    { offset: WEBDAV_READ_AHEAD_SIZE, length: WEBDAV_READ_AHEAD_SIZE },
+  ]);
+  assert.equal(cache.metrics.prefetchRequests, 1);
+  const nextBlock = await cache.read(WEBDAV_READ_AHEAD_SIZE, 4, fetchRange);
+  assert.deepEqual(
+    Array.from(new Uint8Array(nextBlock)),
+    Array.from({ length: 4 }, (_, index) =>
+      (WEBDAV_READ_AHEAD_SIZE + index) % 251
+    )
+  );
+  assert.equal(requests.length, 2);
   assert.deepEqual(cache.metrics, {
-    requestCount: 1,
-    bytesFetched: WEBDAV_READ_AHEAD_SIZE,
-    bytesReturned: 8,
-    cacheHits: 1,
+    requestCount: 2,
+    prefetchRequests: 1,
+    bytesFetched: WEBDAV_READ_AHEAD_SIZE * 2,
+    bytesReturned: 12,
+    cacheHits: 2,
     networkTimeMs: cache.metrics.networkTimeMs,
   });
   assert.ok(cache.metrics.networkTimeMs >= 0);
@@ -92,6 +105,21 @@ test('large reads request only the requested range and return short EOF data', a
   }]);
   assert.deepEqual(Array.from(new Uint8Array(result)), [9, 8, 7, 6, 5]);
   assert.equal(cache.metrics.bytesReturned, 5);
+  cache.clear();
+});
+
+test('short ranges stop speculative reads beyond end of file', async () => {
+  const cache = new WebDAVReadCache();
+  const requests = [];
+  const fetchRange = async (offset, length) => {
+    requests.push(offset);
+    return new Uint8Array(10).buffer;
+  };
+
+  await cache.read(0, 4, fetchRange);
+  await cache.read(4, 4, fetchRange);
+  assert.deepEqual(requests, [0]);
+  assert.equal(cache.metrics.prefetchRequests, 0);
   cache.clear();
 });
 

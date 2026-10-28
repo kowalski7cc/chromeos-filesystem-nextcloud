@@ -308,10 +308,12 @@ export default class WebDAVFS {
       const readCache = this.#readCaches.get(openedFileKey(fileSystemId, openRequestId));
       if (readCache) {
         const {
-          requestCount, bytesFetched, bytesReturned, cacheHits, networkTimeMs,
+          requestCount, prefetchRequests, bytesFetched, bytesReturned,
+          cacheHits, networkTimeMs,
         } = readCache.metrics;
         console.info(
-          `Download timing: requests=${requestCount}, bytesFetched=${bytesFetched}, ` +
+          `Download timing: requests=${requestCount}, prefetchRequests=${prefetchRequests}, ` +
+          `bytesFetched=${bytesFetched}, ` +
           `bytesReturned=${bytesReturned}, cacheHits=${cacheHits}, ` +
           `networkTimeMs=${Math.round(networkTimeMs)}`
         );

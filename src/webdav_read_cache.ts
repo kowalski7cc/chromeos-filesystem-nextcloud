@@ -5,6 +5,7 @@ const cachedBlocks = new Map<string, ArrayBuffer>();
 
 export interface WebDAVReadMetrics {
   requestCount: number
+  prefetchRequests: number
   bytesFetched: number
   bytesReturned: number
   cacheHits: number
@@ -42,8 +43,11 @@ export class WebDAVReadCache {
   #id = nextCacheId++;
   #active = true;
   #pending = new Map<number, Promise<ArrayBuffer>>();
+  #lastReadEnd: number | undefined;
+  #shortRangeSeen = false;
   #metrics: WebDAVReadMetrics = {
     requestCount: 0,
+    prefetchRequests: 0,
     bytesFetched: 0,
     bytesReturned: 0,
     cacheHits: 0,
@@ -64,6 +68,7 @@ export class WebDAVReadCache {
 
     let data: ArrayBuffer;
     let dataOffset: number;
+    let sequential = false;
     if (length > WEBDAV_READ_AHEAD_SIZE) {
       dataOffset = offset;
       data = await this.#fetch(fetchRange, offset, length);
@@ -79,6 +84,13 @@ export class WebDAVReadCache {
         blockOffset += WEBDAV_READ_AHEAD_SIZE)
         blockOffsets.push(blockOffset);
 
+      sequential = offset === this.#lastReadEnd;
+      if (sequential && !this.#shortRangeSeen) {
+        void this.#prefetchBlock(
+          blockOffsets[blockOffsets.length - 1] + WEBDAV_READ_AHEAD_SIZE,
+          fetchRange
+        );
+      }
       const blocks = await Promise.all(blockOffsets.map(blockOffset =>
         this.#getBlock(blockOffset, fetchRange)
       ));
@@ -105,6 +117,7 @@ export class WebDAVReadCache {
 
     const availableLength = Math.max(0, Math.min(length, data.byteLength - (offset - dataOffset)));
     this.#metrics.bytesReturned += availableLength;
+    this.#lastReadEnd = offset + availableLength;
     return data.slice(offset - dataOffset, offset - dataOffset + availableLength);
   }
 
@@ -142,6 +155,8 @@ export class WebDAVReadCache {
 
     const request = this.#fetch(fetchRange, offset, WEBDAV_READ_AHEAD_SIZE)
       .then(data => {
+        if (data.byteLength < WEBDAV_READ_AHEAD_SIZE)
+          this.#shortRangeSeen = true;
         if (this.#active) {
           cachedBlocks.set(key, data);
           while (cachedBlocks.size > MAX_CACHED_BLOCKS) {
@@ -154,6 +169,21 @@ export class WebDAVReadCache {
       .finally(() => this.#pending.delete(offset));
     this.#pending.set(offset, request);
     return request;
+  }
+
+  async #prefetchBlock(
+    offset: number,
+    fetchRange: (offset: number, length: number) => Promise<ArrayBuffer>
+  ): Promise<void> {
+    if (!this.#active || this.#shortRangeSeen) return;
+    const key = `${this.#id}:${offset}`;
+    if (cachedBlocks.has(key) || this.#pending.has(offset)) return;
+    this.#metrics.prefetchRequests++;
+    try {
+      await this.#getBlock(offset, fetchRange);
+    } catch (error) {
+      console.warn('WebDAV range read-ahead failed; a later read will retry', error);
+    }
   }
 
   async #fetch(
