@@ -171,7 +171,9 @@ test('Nextcloud files upload as ordered numeric chunks with v2 headers', async (
     '/uploads/user/upload-id',
     '/files/user/file.bin',
     destination,
-    new ArrayBuffer(fileSize)
+    fileSize,
+    async (offset, length) =>
+      new Uint8Array(length).map((_, index) => (offset + index) % 251).buffer
   );
 
   assert.deepEqual(requests.map(({ path, options }) => [
@@ -203,7 +205,8 @@ test('empty Nextcloud files use a direct PUT and remove the temporary folder', a
     '/uploads/user/upload-id',
     '/files/user/empty',
     'https://cloud.example.com/remote.php/dav/files/user/empty',
-    new ArrayBuffer(0)
+    0,
+    async () => new ArrayBuffer(0)
   );
 
   assert.deepEqual(requests.map(({ path, options }) => [path, options.method]), [

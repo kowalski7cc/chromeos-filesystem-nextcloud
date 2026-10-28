@@ -115,15 +115,15 @@ export async function uploadNextcloudFile(
   uploadPath: string,
   destinationPath: string,
   destination: string,
-  buffer: ArrayBuffer
+  fileSize: number,
+  readRange: (offset: number, length: number) => Promise<ArrayBuffer>
 ): Promise<void> {
-  const fileSize = buffer.byteLength;
   const chunkCount = getNextcloudUploadChunkCount(fileSize);
 
   if (chunkCount === 0) {
     await client.customRequest(destinationPath, {
       method: 'PUT',
-      data: buffer,
+      data: await readRange(0, 0),
     });
     await client.customRequest(`${uploadPath}/`, { method: 'DELETE' });
     return;
@@ -140,7 +140,7 @@ export async function uploadNextcloudFile(
     await client.customRequest(`${uploadPath}/${chunkName}`, {
       method: 'PUT',
       headers,
-      data: buffer.slice(start, end),
+      data: await readRange(start, end - start),
     });
   }
 

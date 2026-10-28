@@ -5,11 +5,13 @@ import MetadataCache from './metadata_cache';
 import {
   getOpenedFile,
   getOpenedFiles,
+  openedFileSize,
   openedFileKey,
   OpenedFileRecord,
   putOpenedFile,
+  readOpenedFileRange,
   removeOpenedFile,
-  updateOpenedFile,
+  stageOpenedFileWrite,
 } from './opened_files_store';
 import {
   buildNextcloudFilesUrl,
@@ -49,9 +51,14 @@ interface FileSystemProps {
   uploadPathConverter: PathConverter
 }
 
+interface WritePerformanceMetrics {
+  handlerTimeMs: number
+}
+
 export default class WebDAVFS {
   #proxy: Proxy;
   #fileSystemMap: { [fileSystemId: string]: FileSystemProps } = {};
+  #writePerformanceMetrics = new Map<string, WritePerformanceMetrics>();
   #mountState: Promise<{
     fileSystems: chrome.fileSystemProvider.FileSystemInfo[]
     mountedCredentials: Credential[]
@@ -245,6 +252,7 @@ export default class WebDAVFS {
       uuid,
       buffer,
       recoverable: true,
+      size: 0,
     });
   }
 
@@ -254,7 +262,7 @@ export default class WebDAVFS {
     const { fileSystemId, openRequestId } = options;
     const openedFile = await getOpenedFile(fileSystemId, openRequestId);
     if (!openedFile) throw new Error('Open file operation state is unavailable');
-    const { filePath, mode, uuid, buffer, recoverable } = openedFile;
+    const { filePath, mode, uuid, recoverable } = openedFile;
     console.log(`WebDAVFS.onCloseFileRequested: openRequestId=${openRequestId}, filePath='${filePath}', mode=${mode}`);
 
     const { server, domain, username, client, filePathConverter, uploadPathConverter } =
@@ -262,6 +270,8 @@ export default class WebDAVFS {
 
     if (mode === 'WRITE') {
       if (!recoverable) throw new Error('Open file operation cannot be safely resumed');
+      const fileSize = openedFileSize(openedFile);
+      const uploadStartedAt = performance.now();
       if (server === 'nc') {
         const destinationPath = filePathConverter(filePath);
         const destination = buildNextcloudFileDestination(domain, username, filePath);
@@ -270,12 +280,27 @@ export default class WebDAVFS {
           uploadPathConverter(`/${uuid}`),
           destinationPath,
           destination,
-          buffer
+          fileSize,
+          (offset, length) =>
+            readOpenedFileRange(openedFile, offset, length)
         );
-      } else await client.putFileContents(filePathConverter(filePath), buffer);
+      } else {
+        const data = await readOpenedFileRange(openedFile, 0, fileSize);
+        await client.putFileContents(filePathConverter(filePath), data);
+      }
+      const metrics = this.#writePerformanceMetrics.get(
+        openedFileKey(fileSystemId, openRequestId)
+      );
+      console.info(
+        `Upload timing: bytes=${fileSize}, writeCalls=${openedFile.writeCalls || 0}, ` +
+        `writeBytes=${openedFile.writeBytes || 0}, ` +
+        `writeHandlerMs=${Math.round(metrics?.handlerTimeMs || 0)}, ` +
+        `closeUploadMs=${Math.round(performance.now() - uploadStartedAt)}`
+      );
     }
 
     await removeOpenedFile(fileSystemId, openRequestId);
+    this.#writePerformanceMetrics.delete(openedFileKey(fileSystemId, openRequestId));
   }
 
   async onReadFileRequested(
@@ -318,13 +343,14 @@ export default class WebDAVFS {
     const { filePath } = openedFile;
     console.log(`WebDAVFS.onWriteFileRequested: openRequestId=${openRequestId}, filePath='${filePath}', offset=${offset}, data.byteLength=${data.byteLength}`);
 
-    await updateOpenedFile(fileSystemId, openRequestId, current => {
-      const length = Math.max(current.buffer.byteLength, offset + data.byteLength);
-      const typed = new Uint8Array(new ArrayBuffer(length));
-      typed.set(new Uint8Array(current.buffer));
-      typed.set(new Uint8Array(data), offset);
-      return { ...current, buffer: typed.buffer };
-    });
+    const startedAt = performance.now();
+    await stageOpenedFileWrite(fileSystemId, openRequestId, offset, data);
+    const key = openedFileKey(fileSystemId, openRequestId);
+    const metrics = this.#writePerformanceMetrics.get(key) || {
+      handlerTimeMs: 0,
+    };
+    metrics.handlerTimeMs += performance.now() - startedAt;
+    this.#writePerformanceMetrics.set(key, metrics);
   }
 
   async onCreateDirectoryRequested(

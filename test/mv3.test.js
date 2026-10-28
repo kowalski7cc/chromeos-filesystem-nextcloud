@@ -215,3 +215,150 @@ test('concurrent persisted writes retain bytes at all offsets', async () => {
   const result = await store.getOpenedFile(fileSystemId, openRequestId);
   assert.deepEqual(Array.from(new Uint8Array(result.buffer)), [1, 2]);
 });
+
+test('block staging preserves overlapping writes, gaps, and bounded block count', async () => {
+  const storeSource = fs.readFileSync(path.join(__dirname, '../src/opened_files_store.ts'), 'utf8');
+  const compiled = typescript.transpileModule(storeSource, {
+    compilerOptions: {
+      module: typescript.ModuleKind.CommonJS,
+      target: typescript.ScriptTarget.ES2020,
+    },
+  }).outputText;
+  const storeModule = { exports: {} };
+  new Function('exports', 'require', 'module', compiled)(
+    storeModule.exports,
+    require,
+    storeModule
+  );
+  const store = storeModule.exports;
+  const fileSystemId = 'webdavfs://blocks.example.com/user';
+  const openRequestId = 29;
+  const record = {
+    key: `${fileSystemId}:${openRequestId}`,
+    openRequestId,
+    fileSystemId,
+    filePath: '/large.bin',
+    mode: 'WRITE',
+    uuid: 'upload-blocks',
+    buffer: new ArrayBuffer(0),
+    recoverable: true,
+    size: 0,
+  };
+  await store.putOpenedFile(record);
+
+  await Promise.all([
+    store.stageOpenedFileWrite(fileSystemId, openRequestId, 0, Uint8Array.from([1, 2, 3]).buffer),
+    store.stageOpenedFileWrite(fileSystemId, openRequestId, 1, Uint8Array.from([8, 9]).buffer),
+  ]);
+  const sparseOffset = store.OPENED_FILE_BLOCK_SIZE * 2 + 5;
+  await store.stageOpenedFileWrite(
+    fileSystemId,
+    openRequestId,
+    sparseOffset,
+    Uint8Array.from([7]).buffer
+  );
+
+  const stagedRecord = await store.getOpenedFile(fileSystemId, openRequestId);
+  assert.equal(store.openedFileSize(stagedRecord), sparseOffset + 1);
+  assert.equal(stagedRecord.buffer.byteLength, 0);
+  assert.equal(stagedRecord.writeCalls, 3);
+  assert.equal(stagedRecord.writeBytes, 6);
+  const prefix = new Uint8Array(await store.readOpenedFileRange(
+    stagedRecord,
+    0,
+    store.OPENED_FILE_BLOCK_SIZE + 1
+  ));
+  assert.deepEqual(Array.from(prefix.subarray(0, 3)), [1, 8, 9]);
+  assert.equal(prefix[store.OPENED_FILE_BLOCK_SIZE], 0);
+
+  const tail = new Uint8Array(await store.readOpenedFileRange(
+    stagedRecord,
+    sparseOffset - 1,
+    2
+  ));
+  assert.deepEqual(Array.from(tail), [0, 7]);
+
+  const database = await new Promise((resolve, reject) => {
+    const request = indexedDB.open('nextcloud-filesystem', 2);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  const transaction = database.transaction('opened-file-blocks', 'readonly');
+  const keys = await new Promise((resolve, reject) => {
+    const request = transaction.objectStore('opened-file-blocks').getAllKeys();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  const stagedKeys = keys.filter(key => String(key).startsWith(`${record.key}:block:`));
+  assert.equal(stagedKeys.length, 2);
+  const restartedModule = { exports: {} };
+  new Function('exports', 'require', 'module', compiled)(
+    restartedModule.exports,
+    require,
+    restartedModule
+  );
+  const restartedStore = restartedModule.exports;
+  const recoveredRecord = await restartedStore.getOpenedFile(fileSystemId, openRequestId);
+  assert.deepEqual(
+    Array.from(new Uint8Array(await restartedStore.readOpenedFileRange(
+      recoveredRecord,
+      0,
+      3
+    ))),
+    [1, 8, 9]
+  );
+  await restartedStore.removeOpenedFile(fileSystemId, openRequestId);
+  const remainingKeys = await new Promise((resolve, reject) => {
+    const request = database.transaction('opened-file-blocks', 'readonly')
+      .objectStore('opened-file-blocks').getAllKeys();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  assert.equal(
+    remainingKeys.filter(key => String(key).startsWith(`${record.key}:block:`)).length,
+    0
+  );
+  database.close();
+});
+
+test('block staging overlays new writes on legacy persisted buffers', async () => {
+  const storeSource = fs.readFileSync(path.join(__dirname, '../src/opened_files_store.ts'), 'utf8');
+  const compiled = typescript.transpileModule(storeSource, {
+    compilerOptions: {
+      module: typescript.ModuleKind.CommonJS,
+      target: typescript.ScriptTarget.ES2020,
+    },
+  }).outputText;
+  const storeModule = { exports: {} };
+  new Function('exports', 'require', 'module', compiled)(
+    storeModule.exports,
+    require,
+    storeModule
+  );
+  const store = storeModule.exports;
+  const fileSystemId = 'webdavfs://legacy.example.com/user';
+  const openRequestId = 31;
+  await store.putOpenedFile({
+    key: `${fileSystemId}:${openRequestId}`,
+    openRequestId,
+    fileSystemId,
+    filePath: '/legacy.bin',
+    mode: 'WRITE',
+    uuid: 'legacy-upload',
+    buffer: Uint8Array.from([4, 5, 6]).buffer,
+    recoverable: true,
+  });
+
+  await store.stageOpenedFileWrite(
+    fileSystemId,
+    openRequestId,
+    1,
+    Uint8Array.from([0]).buffer
+  );
+  const record = await store.getOpenedFile(fileSystemId, openRequestId);
+  assert.deepEqual(
+    Array.from(new Uint8Array(await store.readOpenedFileRange(record, 0, 3))),
+    [4, 0, 6]
+  );
+  await store.removeOpenedFile(fileSystemId, openRequestId);
+});
