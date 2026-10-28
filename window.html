@@ -16,7 +16,7 @@
           <label for="domain">__MSG_serverDomain__</label>
         </th>
         <td>
-          <input id="domain" type="text" placeholder="cloud.example.com">
+          <input id="domain" type="text" placeholder="cloud.example.com" required>
         </td>
       </tr>
     </tbody>
@@ -49,9 +49,9 @@
 
     <label class="advanced-toggle-row" for="useInstanceName">
       <span class="advanced-toggle-label">__MSG_useNameFromNextcloudInstance__</span>
-      <span class="switch" aria-hidden="true">
-        <input id="useInstanceName" type="checkbox" checked>
-        <span class="slider"></span>
+      <span class="switch">
+        <input id="useInstanceName" type="checkbox" role="switch" checked>
+        <span class="slider" aria-hidden="true"></span>
       </span>
     </label>
 
@@ -72,7 +72,7 @@
   </details>
 
   <div class="row">
-    <span id="message"></span>
+    <span id="message" role="status" aria-live="polite" aria-atomic="true"></span>
     <button id="btnOk">__MSG_login__</button>
   </div>
 

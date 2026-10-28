@@ -53,6 +53,7 @@ async function fetchDefaultInstanceName(domain) {
 }
 
 function applyLocale() {
+  document.documentElement.lang = chrome.i18n.getUILanguage?.() || 'en';
   const nameLabel = document.querySelector('label[for="name"]');
   const domainLabel = document.querySelector('label[for="domain"]');
   const usernameLabel = document.querySelector('label[for="username"]');
@@ -146,16 +147,22 @@ document.querySelector('#domain').addEventListener('keydown', ev => {
 
 document.querySelector('#btnOk').addEventListener('click', async ev => {
   const btnOk = ev.target;
-  btnOk.setAttribute('disabled', 'true');
+  const domainInput = document.querySelector('#domain');
+  const domain = domainInput.value.trim();
+  domainInput.value = domain;
+  if (!domainInput.reportValidity()) return;
 
-  const domain = document.querySelector('#domain').value;
+  btnOk.setAttribute('disabled', 'true');
   const username = document.querySelector('#username').value;
   const password = document.querySelector('#password').value;
 
   const granted = await browser.permissions.request({
     origins: [`https://${domain}/`]
   });
-  if (!granted) return;
+  if (!granted) {
+    btnOk.removeAttribute('disabled');
+    return;
+  }
 
   let resolvedName = nameInput.value || 'Nextcloud';
   if (useInstanceNameInput && useInstanceNameInput.checked) {

@@ -29,6 +29,7 @@ function localize(key: string): string {
 }
 
 function applyLocale(): void {
+  document.documentElement.lang = chrome.i18n.getUILanguage?.() || 'en';
   document.querySelectorAll<HTMLElement>('[data-i18n]').forEach(element => {
     const key = element.dataset.i18n;
     if (!key) throw new Error('Transfer settings localization key is missing');

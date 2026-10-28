@@ -34,6 +34,7 @@ function loadWindowScript() {
     module: { exports: {} },
     document: {
       title: '',
+      documentElement: { lang: '' },
       querySelector(selector) {
         const mapping = {
           '#name': elements.name,
