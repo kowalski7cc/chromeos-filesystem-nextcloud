@@ -57,14 +57,14 @@
     "message": "Nume"
   },
   "useNameFromNextcloudInstance": {
-    "message": "Use name from Nextcloud instance if available",
+    "message": "Folosește numele instanței Nextcloud, dacă este disponibil",
     "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
   },
   "serverDomain": {
     "message": "Domeniul serverului"
   },
   "advancedSettings": {
-    "message": "Advanced settings",
+    "message": "Setări avansate",
     "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {

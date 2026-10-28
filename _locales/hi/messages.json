@@ -57,14 +57,14 @@
     "message": "नाम"
   },
   "useNameFromNextcloudInstance": {
-    "message": "Use name from Nextcloud instance if available",
+    "message": "उपलब्ध होने पर Nextcloud इंस्टेंस का नाम इस्तेमाल करें",
     "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
   },
   "serverDomain": {
     "message": "सर्वर डोमेन"
   },
   "advancedSettings": {
-    "message": "Advanced settings",
+    "message": "एडवांस सेटिंग",
     "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {

@@ -416,4 +416,29 @@ test('all locale catalogs define extension UI message labels', () => {
       assert.ok(messages[key]?.message, `Missing ${key} message for ${locale}`);
     }
   }
+
+  const windowHtml = fs.readFileSync(
+    path.join(__dirname, '../window.html'),
+    'utf8'
+  );
+  const windowMessageKeys = [...windowHtml.matchAll(/__MSG_([A-Za-z0-9_]+)__/g)]
+    .map(([, key]) => key);
+  const englishMessages = JSON.parse(fs.readFileSync(
+    path.join(localeRoot, 'en', 'messages.json'),
+    'utf8'
+  ));
+
+  for (const locale of locales) {
+    const messages = JSON.parse(fs.readFileSync(
+      path.join(localeRoot, locale, 'messages.json'),
+      'utf8'
+    ));
+    for (const key of windowMessageKeys)
+      assert.ok(messages[key]?.message, `Missing ${key} message for ${locale}`);
+    if (locale !== 'en') {
+      for (const key of ['advancedSettings', 'useNameFromNextcloudInstance'])
+        assert.notEqual(messages[key].message, englishMessages[key].message,
+          `Untranslated ${key} message for ${locale}`);
+    }
+  }
 });

@@ -57,14 +57,14 @@
     "message": "Pavadinimas"
   },
   "useNameFromNextcloudInstance": {
-    "message": "Use name from Nextcloud instance if available",
+    "message": "Naudoti „Nextcloud“ egzemplioriaus pavadinimą, jei jis pasiekiamas",
     "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
   },
   "serverDomain": {
     "message": "Serverio domenas"
   },
   "advancedSettings": {
-    "message": "Advanced settings",
+    "message": "Išplėstiniai nustatymai",
     "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {

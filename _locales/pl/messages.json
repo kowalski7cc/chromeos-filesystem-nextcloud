@@ -57,14 +57,14 @@
     "message": "Nazwa"
   },
   "useNameFromNextcloudInstance": {
-    "message": "Use name from Nextcloud instance if available",
+    "message": "Użyj nazwy instancji Nextcloud, jeśli jest dostępna",
     "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
   },
   "serverDomain": {
     "message": "Domena serwera"
   },
   "advancedSettings": {
-    "message": "Advanced settings",
+    "message": "Ustawienia zaawansowane",
     "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {

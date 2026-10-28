@@ -76,7 +76,7 @@
     "description": "Label for the mount name field"
   },
   "useNameFromNextcloudInstance": {
-    "message": "Use name from Nextcloud instance if available",
+    "message": "Використовувати назву екземпляра Nextcloud, якщо доступна",
     "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
   },
   "serverDomain": {
@@ -84,7 +84,7 @@
     "description": "Label for the server domain field"
   },
   "advancedSettings": {
-    "message": "Advanced settings",
+    "message": "Додаткові налаштування",
     "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {

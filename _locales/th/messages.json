@@ -57,14 +57,14 @@
     "message": "ชื่อ"
   },
   "useNameFromNextcloudInstance": {
-    "message": "Use name from Nextcloud instance if available",
+    "message": "ใช้ชื่ออินสแตนซ์ Nextcloud หากมี",
     "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
   },
   "serverDomain": {
     "message": "โดเมนเซิร์ฟเวอร์"
   },
   "advancedSettings": {
-    "message": "Advanced settings",
+    "message": "การตั้งค่าขั้นสูง",
     "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {

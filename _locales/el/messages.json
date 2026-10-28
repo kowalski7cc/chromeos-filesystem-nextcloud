@@ -57,14 +57,14 @@
     "message": "Όνομα"
   },
   "useNameFromNextcloudInstance": {
-    "message": "Use name from Nextcloud instance if available",
+    "message": "Χρήση του ονόματος της παρουσίας Nextcloud, αν είναι διαθέσιμο",
     "description": "Toggle to use the instance name from the Nextcloud server instead of a custom mount name."
   },
   "serverDomain": {
     "message": "Τομέας διακομιστή"
   },
   "advancedSettings": {
-    "message": "Advanced settings",
+    "message": "Σύνθετες ρυθμίσεις",
     "description": "Summary label for the advanced settings expander."
   },
   "useUsernamePassword": {
