@@ -123,13 +123,13 @@ test('file URLs open the preview in its containing directory', () => {
 test('directory URLs omit file preview parameters', () => {
   const url = new URL(buildNextcloudFilesUrl(
     'cloud.example.com',
-    '/Projects/Archive/',
+    '/Photos/',
     true,
     '2597649'
   ));
 
   assert.equal(url.pathname, '/apps/files/files/2597649');
-  assert.equal(url.searchParams.get('dir'), '/Projects');
+  assert.equal(url.searchParams.get('dir'), '/Photos');
   assert.equal(url.searchParams.has('editing'), false);
   assert.equal(url.searchParams.has('openfile'), false);
 });

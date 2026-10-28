@@ -57,7 +57,9 @@ export function buildNextcloudFilesUrl(
   const parentSeparator = path.lastIndexOf('/');
   url.searchParams.set(
     'dir',
-    parentSeparator <= 0 ? '/' : path.slice(0, parentSeparator)
+    isDirectory
+      ? path
+      : parentSeparator <= 0 ? '/' : path.slice(0, parentSeparator)
   );
 
   if (!isDirectory) {
