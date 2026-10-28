@@ -89,6 +89,9 @@
   "useHttpsForConnection": {
     "message": "接続に HTTPS を使用する"
   },
+  "httpConnectionWarning": {
+    "message": "HTTP は暗号化されません。認証情報やファイルがネットワーク上の他者に見られる可能性があります。信頼できるネットワークでのみ続行してください。"
+  },
   "connectionFailed": {
     "message": "サーバーに接続できません。アドレスを確認して再試行してください。"
   },

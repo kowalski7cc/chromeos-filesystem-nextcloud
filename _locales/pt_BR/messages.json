@@ -69,6 +69,9 @@
   "useHttpsForConnection": {
     "message": "Usar HTTPS para a conexão"
   },
+  "httpConnectionWarning": {
+    "message": "O HTTP não é criptografado. Suas credenciais e arquivos podem ficar visíveis para outras pessoas na rede. Continue apenas em uma rede confiável."
+  },
   "connectionFailed": {
     "message": "Não foi possível conectar ao servidor. Verifique o endereço e tente novamente."
   },

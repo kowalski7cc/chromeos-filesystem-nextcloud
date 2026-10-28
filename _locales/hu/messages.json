@@ -89,6 +89,9 @@
   "useHttpsForConnection": {
     "message": "HTTPS használata a kapcsolathoz"
   },
+  "httpConnectionWarning": {
+    "message": "A HTTP nem titkosított. A hitelesítő adatai és fájljai láthatók lehetnek a hálózat más felhasználói számára. Csak megbízható hálózaton folytassa."
+  },
   "connectionFailed": {
     "message": "Nem sikerült csatlakozni a kiszolgálóhoz. Ellenőrizze a címet, majd próbálja újra."
   },

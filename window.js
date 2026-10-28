@@ -136,6 +136,11 @@ const useInstanceNameInput = document.querySelector('#useInstanceName');
 const useHttpsInput = document.querySelector('#useHttps');
 const nameOverrideRow = document.querySelector('#nameOverrideRow');
 
+useHttpsInput.addEventListener('change', () => {
+  if (!useHttpsInput.checked)
+    window.alert(i18n('httpConnectionWarning'));
+});
+
 function syncAdvancedNameControls() {
   const shouldUseInstanceName = !!useInstanceNameInput && useInstanceNameInput.checked;
   if (nameOverrideRow) {

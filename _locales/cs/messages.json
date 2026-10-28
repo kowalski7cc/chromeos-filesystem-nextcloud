@@ -89,6 +89,9 @@
   "useHttpsForConnection": {
     "message": "Použít pro připojení HTTPS"
   },
+  "httpConnectionWarning": {
+    "message": "HTTP není šifrované. Vaše přihlašovací údaje a soubory mohou být viditelné pro ostatní v síti. Pokračujte pouze v důvěryhodné síti."
+  },
   "connectionFailed": {
     "message": "K serveru se nepodařilo připojit. Zkontrolujte adresu a zkuste to znovu."
   },

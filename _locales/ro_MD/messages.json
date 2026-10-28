@@ -69,6 +69,9 @@
   "useHttpsForConnection": {
     "message": "Folosește HTTPS pentru conexiune"
   },
+  "httpConnectionWarning": {
+    "message": "HTTP nu este criptat. Datele de autentificare și fișierele pot fi vizibile pentru alte persoane din rețea. Continuă doar într-o rețea de încredere."
+  },
   "connectionFailed": {
     "message": "Conectarea la server a eșuat. Verifică adresa și încearcă din nou."
   },

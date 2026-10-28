@@ -85,7 +85,10 @@ function loadWindowScript(options = {}) {
       ok: true,
       json: async () => ({ ocs: { meta: { status: 'ok' }, data: { capabilities: { theming: { name: 'Example Cloud' } } } } }),
     })),
-    window: { close() {} },
+    window: {
+      close() {},
+      alert: options.alert || (() => {}),
+    },
   };
   context.globalThis = context;
   vm.createContext(context);
@@ -176,6 +179,20 @@ test('connection dialog enables HTTPS by default in its markup', () => {
   const markup = fs.readFileSync(path.join(__dirname, '../window.html'), 'utf8');
 
   assert.match(markup, /<input id="useHttps" type="checkbox" role="switch" checked>/);
+});
+
+test('turning HTTPS off warns about unencrypted HTTP traffic', () => {
+  const alerts = [];
+  const { elements, listeners } = loadWindowScript({
+    alert: message => alerts.push(message),
+  });
+
+  elements.useHttps.checked = false;
+  listeners.get('useHttps:change')();
+  elements.useHttps.checked = true;
+  listeners.get('useHttps:change')();
+
+  assert.deepEqual(alerts, ['httpConnectionWarning']);
 });
 
 test('HTTP Login Flow uses HTTP endpoints and registers the matching proxy rule', async () => {

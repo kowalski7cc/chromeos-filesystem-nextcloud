@@ -399,6 +399,7 @@ test('all locale catalogs define extension UI message labels', () => {
   const locales = fs.readdirSync(localeRoot);
   const requiredKeys = [
     'useHttpsForConnection',
+    'httpConnectionWarning',
     'invalidServerDomain',
     'settingsTitle',
     'settingsDescription',

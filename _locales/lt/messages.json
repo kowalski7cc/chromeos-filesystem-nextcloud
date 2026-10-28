@@ -69,6 +69,9 @@
   "useHttpsForConnection": {
     "message": "Naudoti HTTPS ryšiui"
   },
+  "httpConnectionWarning": {
+    "message": "HTTP ryšys nėra šifruojamas. Jūsų prisijungimo duomenys ir failai gali būti matomi kitiems tinklo naudotojams. Tęskite tik patikimame tinkle."
+  },
   "connectionFailed": {
     "message": "Nepavyko prisijungti prie serverio. Patikrinkite adresą ir bandykite dar kartą."
   },

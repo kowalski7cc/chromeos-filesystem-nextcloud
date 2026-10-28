@@ -69,6 +69,9 @@
   "useHttpsForConnection": {
     "message": "Używaj HTTPS do połączenia"
   },
+  "httpConnectionWarning": {
+    "message": "HTTP nie jest szyfrowany. Twoje dane logowania i pliki mogą być widoczne dla innych osób w sieci. Kontynuuj tylko w zaufanej sieci."
+  },
   "connectionFailed": {
     "message": "Nie można połączyć się z serwerem. Sprawdź adres i spróbuj ponownie."
   },

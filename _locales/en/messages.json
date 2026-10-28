@@ -90,6 +90,9 @@
     "message": "Use HTTPS for connection",
     "description": "Toggle HTTPS for the server connection."
   },
+  "httpConnectionWarning": {
+    "message": "HTTP is not encrypted. Your credentials and file data may be visible to others on the network. Continue only on a trusted network."
+  },
   "connectionFailed": {
     "message": "Could not connect to the server. Check the address and try again."
   },

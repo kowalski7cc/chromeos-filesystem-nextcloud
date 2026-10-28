@@ -89,6 +89,9 @@
   "useHttpsForConnection": {
     "message": "使用 HTTPS 连接"
   },
+  "httpConnectionWarning": {
+    "message": "HTTP 未加密。您的凭据和文件可能会被网络中的其他人看到。仅在可信网络中继续。"
+  },
   "connectionFailed": {
     "message": "无法连接到服务器。请检查地址后重试。"
   },

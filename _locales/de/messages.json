@@ -89,6 +89,9 @@
   "useHttpsForConnection": {
     "message": "HTTPS für die Verbindung verwenden"
   },
+  "httpConnectionWarning": {
+    "message": "HTTP ist unverschlüsselt. Ihre Zugangsdaten und Dateien können für andere im Netzwerk sichtbar sein. Fahren Sie nur in einem vertrauenswürdigen Netzwerk fort."
+  },
   "connectionFailed": {
     "message": "Verbindung zum Server nicht möglich. Prüfen Sie die Adresse und versuchen Sie es erneut."
   },
